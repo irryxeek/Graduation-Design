@@ -88,7 +88,6 @@ def sample(model, condition, shape):
 # =================3. 主程序=================
 if __name__ == "__main__":
     # A. 准备数据统计量 (用于反归一化)
-    print("正在加载数据统计量...")
     try:
         raw_x = np.load(os.path.join(DATA_DIR, "train_x.npy")).astype(np.float32)
         raw_y = np.load(os.path.join(DATA_DIR, "train_y.npy")).astype(np.float32)
@@ -106,7 +105,7 @@ if __name__ == "__main__":
     model = ConditionalUNet1D().to(DEVICE)
     if os.path.exists(MODEL_PATH):
         model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
-        print(f"✅ 成功加载模型权重: {MODEL_PATH}")
+        print(f"成功加载模型权重: {MODEL_PATH}")
     else:
         print(f"❌ 找不到模型权重: {MODEL_PATH}")
         exit()
@@ -114,7 +113,7 @@ if __name__ == "__main__":
     model.eval()
 
     # C. 随机挑选一个样本进行测试
-    sample_idx = np.random.randint(0, len(raw_x))
+    sample_idx = 748 # np.random.randint(0, len(raw_x))
     print(f"正在测试样本 ID: {sample_idx}")
     
     # 准备输入条件 (标准化)
@@ -123,7 +122,6 @@ if __name__ == "__main__":
     cond_tensor = torch.tensor(input_ba_norm).unsqueeze(0).unsqueeze(0).to(DEVICE) # (1, 1, 301)
     
     # D. 执行生成 (Sampling)
-    print("开始生成 (这可能需要几秒钟)...")
     generated_norm = sample(model, cond_tensor, shape=(1, 1, 301))
     
     # E. 反归一化 (还原为真实温度 K)
@@ -132,27 +130,54 @@ if __name__ == "__main__":
     
     # F. 计算误差
     rmse = np.sqrt(np.mean((pred_temp.numpy() - true_temp)**2))
-    print(f"预测完成! RMSE: {rmse:.2f} K")
+    print(f"预测完成, RMSE: {rmse:.2f} K")
 
-    # G. 画图对比
+# ... (前面的代码保持不变) ...
+    
+    # ==========================================
+    # 新增: 后处理平滑 (Savitzky-Golay Filter)
+    # ==========================================
+    from scipy.signal import savgol_filter
+    
+    # window_length: 窗口长度 (必须是奇数)，越大越平滑，但可能丢失细节
+    # polyorder: 多项式阶数，通常选 2 或 3
+    pred_temp_smooth = savgol_filter(pred_temp.numpy(), window_length=31, polyorder=3)
+    
+    # 重新计算平滑后的 RMSE
+    rmse_smooth = np.sqrt(np.mean((pred_temp_smooth - true_temp)**2))
+    print(f"平滑后 RMSE: {rmse_smooth:.2f} K (原值: {rmse:.2f} K)")
+
+    # ==========================================
+    # G. 画图对比 (升级版)
+    # ==========================================
     heights = np.linspace(0, 60, 301)
     
-    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    fig, ax = plt.subplots(1, 2, figsize=(14, 6))
     
     # 左图: 输入弯曲角
-    ax[0].plot(input_ba, heights, 'b-')
+    ax[0].plot(input_ba, heights, 'b-', linewidth=1.5)
     ax[0].set_title(f"Input: Bending Angle (Log10)\nSample {sample_idx}")
     ax[0].set_ylabel("Height (km)")
     ax[0].set_xlabel("Log10(BA)")
-    ax[0].grid(True)
+    ax[0].grid(True, linestyle='--', alpha=0.5)
     
     # 右图: 温度对比
-    ax[1].plot(true_temp, heights, 'k-', label='ERA5 (Truth)', linewidth=2)
-    ax[1].plot(pred_temp, heights, 'r--', label='Diffusion (AI)', linewidth=2)
-    ax[1].set_title(f"Retrieval Result (RMSE={rmse:.2f} K)")
+    # 1. 画真值 (黑线)
+    ax[1].plot(true_temp, heights, 'k-', label='ERA5 (Truth)', linewidth=2.5, alpha=0.8)
+    
+    # 2. 画原始AI输出 (浅红色，作为背景对比)
+    ax[1].plot(pred_temp, heights, color='red', linestyle='-', linewidth=0.5, alpha=0.3, label='AI Raw (Noisy)')
+    
+    # 3. 画平滑后的AI输出 (深红色虚线，作为最终结果)
+    ax[1].plot(pred_temp_smooth, heights, color='red', linestyle='--', linewidth=2, label=f'AI Smoothed (RMSE={rmse_smooth:.2f}K)')
+    
+    ax[1].set_title(f"Retrieval Result Comparison")
     ax[1].set_xlabel("Temperature (K)")
-    ax[1].legend()
-    ax[1].grid(True)
+    ax[1].legend(loc='upper right')
+    ax[1].grid(True, linestyle='--', alpha=0.5)
+    
+    # 设置一下X轴范围，让图好看点
+    ax[1].set_xlim(180, 320)
     
     plt.tight_layout()
     plt.show()
