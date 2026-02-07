@@ -1,1 +1,1 @@
-from . import streamlit_app
+"""Streamlit 交互式应用模块"""

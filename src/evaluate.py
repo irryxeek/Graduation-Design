@@ -1,7 +1,13 @@
 """
-增强版批量评估脚本
-==================
-使用 ro_retrieval 包, 支持:
+评估入口脚本
+============
+使用 ro_retrieval 包进行批量评估。
+
+用法:
+  python src/evaluate.py --sampler ddim --n_samples 50
+  python src/evaluate.py --model_path enhanced_ro_diffusion_best.pth --model_type enhanced --out_channels 3
+
+支持:
   - RMSE / Bias / CC 完整指标体系
   - 单变量和多变量评估
   - DDPM / DDIM 两种采样方式
