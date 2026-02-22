@@ -30,53 +30,40 @@
 ├── ro_retrieval/              # 核心 Python 包
 │   ├── __init__.py            # 包入口, 版本号
 │   ├── config.py              # 全局配置 (路径·超参数·设备)
-│   │
 │   ├── data/                  # 数据处理子包
-│   │   ├── dataset.py         # PyTorch Dataset (单变量 + 多变量)
-│   │   ├── era5_matching.py   # ERA5 时空匹配模块
-│   │   ├── process_enhanced.py# 增强版数据处理流水线
-│   │   └── quality_control.py # 多级质量控制
-│   │
-│   ├── model/                 # 模型子包
-│   │   ├── unet.py            # ConditionalUNet1D + EnhancedConditionalUNet1D
-│   │   └── diffusion.py       # 扩散调度 + DDPM/DDIM 采样
-│   │
+│   ├── model/                 # 模型子包 (U-Net + 扩散调度)
 │   ├── training/              # 训练子包
-│   │   └── trainer.py         # 系统化训练器 (验证 + Early Stopping)
-│   │
 │   ├── evaluation/            # 评估子包
-│   │   └── metrics.py         # RMSE / Bias / CC + EvaluationReport
-│   │
 │   ├── inference/             # 推理子包
-│   │   └── predict.py         # DDPM / DDIM 推理接口
-│   │
 │   └── app/                   # Streamlit 交互式应用
-│       └── streamlit_app.py
 │
 ├── src/                       # 入口脚本
 │   ├── process_data.py        # 数据预处理入口
 │   ├── train.py               # 训练入口
 │   ├── evaluate.py            # 批量评估入口
-│   ├── run_pipeline.py        # 端到端闭环流水线 (处理→训练→评估)
-│   └── legacy/                # 早期独立脚本 (已归档, 勿用于新流程)
+│   ├── run_pipeline.py        # 端到端闭环流水线
+│   └── legacy/                # 早期独立脚本 (已归档)
 │
 ├── utils/                     # 辅助工具
-│   ├── download_era5_sample.py# ERA5 数据下载 (CDS API)
-│   └── visualize.py           # 数据管线可视化验证
+│   ├── download_era5_sample.py
+│   └── visualize.py
 │
-├── Data/
+├── Data/                      # 数据目录 (gitignore)
 │   ├── Sample/                # 原始数据样本
-│   │   ├── atmPrf_nrt_2026_001/   # COSMIC-2 弯曲角
-│   │   ├── wetPf2_nrt_2026_001/   # COSMIC-2 温/压/湿
-│   │   └── ERA5-2026-01-01-6.00/  # ERA5 再分析数据
 │   └── Processed/             # 预处理后的标准化数据
-│       ├── train_x.npy / train_y.npy
-│       ├── val_x.npy   / val_y.npy
-│       ├── test_x.npy  / test_y.npy
-│       └── split_meta.json
 │
-├── requirements.txt           # Python 依赖
-└── *.pth                      # 模型权重文件
+├── checkpoints/               # 模型权重 (gitignore)
+├── outputs/                   # 输出目录 (gitignore)
+│   ├── logs/                  # 训练日志
+│   ├── figures/               # 图片输出
+│   └── evaluation/            # 评估结果
+│
+├── docs/                      # 项目文档
+│   ├── proposal/              # 开题相关
+│   ├── midterm/               # 中期相关
+│   └── defense/               # 答辩相关
+│
+└── requirements.txt           # Python 依赖
 ```
 
 ---

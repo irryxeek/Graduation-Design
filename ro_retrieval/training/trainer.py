@@ -26,7 +26,7 @@ from ro_retrieval.config import (
 )
 from ro_retrieval.data.dataset import RODataset, ROMultiVarDataset
 from ro_retrieval.model.unet import ConditionalUNet1D, EnhancedConditionalUNet1D
-from ro_retrieval.model.diffusion import DiffusionSchedule
+from ro_retrieval.model.diffusion import DiffusionSchedule, ddim_sample
 
 
 class Trainer:
@@ -265,7 +265,7 @@ class Trainer:
                     self.save_dir, f"{self.model_prefix}_best.pth"
                 )
                 torch.save(self.model.state_dict(), best_path)
-                print(f"  ✓ 最佳模型已保存: {best_path}")
+                print(f"  [BEST] 最佳模型已保存: {best_path}")
             else:
                 self.epochs_no_improve += 1
                 if self.epochs_no_improve >= self.patience:
@@ -316,3 +316,209 @@ class Trainer:
         )
 
         print(f"训练日志已保存: {json_path}")
+
+    @torch.no_grad()
+    def evaluate_test(self, model_path: str = None, num_samples: int = 5):
+        """
+        在独立测试集上评估模型性能
+
+        Args:
+            model_path: 模型权重路径，默认使用 best 模型
+            num_samples: 扩散采样时的重复次数（用于估计不确定性）
+
+        Returns:
+            dict: 包含各项评估指标的字典
+        """
+        # 确保模型已初始化
+        if self.model is None:
+            self._setup()
+
+        # 加载模型权重
+        if model_path is None:
+            model_path = os.path.join(self.save_dir, f"{self.model_prefix}_best.pth")
+
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"模型文件不存在: {model_path}")
+
+        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+        self.model.eval()
+        print(f"[Evaluate] 已加载模型: {model_path}")
+
+        # 加载测试集
+        test_x_path = os.path.join(self.data_dir, "test_x.npy")
+        test_y_path = os.path.join(self.data_dir, "test_y.npy")
+
+        if not os.path.exists(test_x_path):
+            raise FileNotFoundError(f"测试集不存在: {test_x_path}")
+
+        if self.mode == "multi":
+            test_dataset = ROMultiVarDataset(test_x_path, test_y_path)
+        else:
+            test_dataset = RODataset(test_x_path, test_y_path)
+
+        test_loader = DataLoader(
+            test_dataset, batch_size=self.batch_size, shuffle=False,
+            num_workers=0, pin_memory=True,
+        )
+
+        print(f"[Evaluate] 测试集样本数: {len(test_dataset)}")
+
+        # 收集预测结果
+        all_preds = []
+        all_targets = []
+        all_conditions = []
+
+        print(f"[Evaluate] 开始推理 (采样次数: {num_samples})...")
+        for condition, x_0 in tqdm(test_loader, desc="Testing"):
+            condition = condition.to(self.device)
+            x_0 = x_0.to(self.device)
+
+            # 多次采样取平均（减少随机性影响）
+            preds_samples = []
+            for _ in range(num_samples):
+                # 使用 DDIM 加速采样
+                shape = x_0.shape
+                pred = ddim_sample(
+                    self.model, condition, shape, self.schedule,
+                    ddim_steps=50, eta=0.0, device=self.device
+                )
+                preds_samples.append(pred.cpu().numpy())
+
+            # 取多次采样的均值
+            pred_mean = np.mean(preds_samples, axis=0)
+            all_preds.append(pred_mean)
+            all_targets.append(x_0.cpu().numpy())
+            all_conditions.append(condition.cpu().numpy())
+
+        # 合并所有批次
+        all_preds = np.concatenate(all_preds, axis=0)      # (N, C, L)
+        all_targets = np.concatenate(all_targets, axis=0)  # (N, C, L)
+        all_conditions = np.concatenate(all_conditions, axis=0)
+
+        # 反归一化（使用测试集自身的统计量）
+        stats = test_dataset.get_stats()
+        preds_denorm = all_preds * stats["y_std"] + stats["y_mean"]
+        targets_denorm = all_targets * stats["y_std"] + stats["y_mean"]
+
+        # 计算评估指标
+        metrics = self._compute_metrics(preds_denorm, targets_denorm)
+
+        # 打印结果
+        print(f"\n{'=' * 60}")
+        print("测试集评估结果")
+        print(f"{'=' * 60}")
+        print(f"  样本数      : {len(test_dataset)}")
+        print(f"  MSE         : {metrics['mse']:.6f}")
+        print(f"  RMSE        : {metrics['rmse']:.6f}")
+        print(f"  MAE         : {metrics['mae']:.6f}")
+        print(f"  R2 (平均)   : {metrics['r2_mean']:.4f}")
+        print(f"  相关系数    : {metrics['corr_mean']:.4f}")
+
+        if self.mode == "multi" and self.out_channels == 3:
+            var_names = ["温度 (T)", "压力 (P)", "比湿 (Q)"]
+            var_units = ["K", "hPa", "kg/kg"]
+            print(f"\n  各变量详细指标:")
+            for i, (name, unit) in enumerate(zip(var_names, var_units)):
+                print(f"    {name}:")
+                print(f"      RMSE : {metrics['rmse_per_var'][i]:.4f} {unit}")
+                print(f"      MAE  : {metrics['mae_per_var'][i]:.4f} {unit}")
+                print(f"      R2   : {metrics['r2_per_var'][i]:.4f}")
+                print(f"      Corr : {metrics['corr_per_var'][i]:.4f}")
+        print(f"{'=' * 60}\n")
+
+        # 保存评估结果
+        result = {
+            "model_path": model_path,
+            "test_samples": len(test_dataset),
+            "num_diffusion_samples": num_samples,
+            "metrics": metrics,
+        }
+
+        result_path = os.path.join(self.save_dir, f"{self.model_prefix}_test_results.json")
+        with open(result_path, "w", encoding="utf-8") as f:
+            # 转换 numpy 类型为 Python 原生类型
+            json_result = json.loads(json.dumps(result, default=lambda x: float(x) if isinstance(x, np.floating) else x.tolist() if isinstance(x, np.ndarray) else x))
+            json.dump(json_result, f, indent=2, ensure_ascii=False)
+        print(f"评估结果已保存: {result_path}")
+
+        return result
+
+    def _compute_metrics(self, preds: np.ndarray, targets: np.ndarray) -> dict:
+        """
+        计算评估指标
+
+        Args:
+            preds: 预测值 (N, C, L) 或 (N, 1, L)
+            targets: 真实值，同上
+
+        Returns:
+            dict: 各项指标
+        """
+        # 展平计算整体指标
+        preds_flat = preds.flatten()
+        targets_flat = targets.flatten()
+
+        mse = np.mean((preds_flat - targets_flat) ** 2)
+        rmse = np.sqrt(mse)
+        mae = np.mean(np.abs(preds_flat - targets_flat))
+
+        # R² 和相关系数（按样本计算后取平均）
+        r2_list = []
+        corr_list = []
+        for i in range(len(preds)):
+            p = preds[i].flatten()
+            t = targets[i].flatten()
+
+            # R²
+            ss_res = np.sum((t - p) ** 2)
+            ss_tot = np.sum((t - np.mean(t)) ** 2)
+            r2 = 1 - ss_res / (ss_tot + 1e-8)
+            r2_list.append(r2)
+
+            # Pearson 相关系数
+            corr = np.corrcoef(p, t)[0, 1]
+            corr_list.append(corr if not np.isnan(corr) else 0)
+
+        r2_mean = np.mean(r2_list)
+        corr_mean = np.mean(corr_list)
+
+        # 各变量的详细指标（多变量模式）
+        rmse_per_var = []
+        mae_per_var = []
+        r2_per_var = []
+        corr_per_var = []
+
+        if preds.ndim == 3 and preds.shape[1] > 1:
+            for c in range(preds.shape[1]):
+                p_var = preds[:, c, :].flatten()
+                t_var = targets[:, c, :].flatten()
+
+                # RMSE
+                var_mse = np.mean((p_var - t_var) ** 2)
+                rmse_per_var.append(np.sqrt(var_mse))
+
+                # MAE
+                mae_per_var.append(np.mean(np.abs(p_var - t_var)))
+
+                # R² (整体)
+                ss_res = np.sum((t_var - p_var) ** 2)
+                ss_tot = np.sum((t_var - np.mean(t_var)) ** 2)
+                r2_per_var.append(1 - ss_res / (ss_tot + 1e-8))
+
+                # 相关系数
+                corr = np.corrcoef(p_var, t_var)[0, 1]
+                corr_per_var.append(corr if not np.isnan(corr) else 0)
+
+        return {
+            "mse": mse,
+            "rmse": rmse,
+            "mae": mae,
+            "r2_mean": r2_mean,
+            "corr_mean": corr_mean,
+            "rmse_per_var": rmse_per_var,
+            "mae_per_var": mae_per_var,
+            "r2_per_var": r2_per_var,
+            "corr_per_var": corr_per_var,
+            "r2_per_sample": r2_list,
+            "corr_per_sample": corr_list,
+        }

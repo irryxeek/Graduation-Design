@@ -12,7 +12,11 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_ROOT, "Data")
 PROCESSED_DIR = os.path.join(DATA_DIR, "Processed")
 SAMPLE_DIR = os.path.join(DATA_DIR, "Sample")
-MODEL_DIR = PROJECT_ROOT  # .pth 文件存放目录
+MODEL_DIR = os.path.join(PROJECT_ROOT, "checkpoints")  # 模型权重目录
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "outputs")     # 输出目录
+LOGS_DIR = os.path.join(OUTPUT_DIR, "logs")            # 训练日志
+FIGURES_DIR = os.path.join(OUTPUT_DIR, "figures")      # 图片输出
+EVAL_DIR = os.path.join(OUTPUT_DIR, "evaluation")      # 评估结果
 
 # ==================== 设备 ====================
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

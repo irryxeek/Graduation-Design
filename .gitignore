@@ -3,6 +3,13 @@
 *.nc
 *.npy
 
+# 输出目录
+outputs/
+checkpoints/
+
+# 临时文件
+*_unpacked/
+
 # Python
 __pycache__/
 *.py[cod]
