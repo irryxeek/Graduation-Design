@@ -60,20 +60,42 @@ def main():
         args.save_dir = os.path.join(PROJECT_ROOT, f"evaluation_results_{suffix}_enhanced")
     os.makedirs(args.save_dir, exist_ok=True)
 
-    # 1. 加载数据
-    raw_x = np.load(os.path.join(args.data_dir, "train_x.npy")).astype(np.float32)
-    raw_y = np.load(os.path.join(args.data_dir, "train_y.npy")).astype(np.float32)
+    # 1. 加载数据 - 优先使用测试集
+    test_x_path = os.path.join(args.data_dir, "test_x.npy")
+    test_y_path = os.path.join(args.data_dir, "test_y.npy")
+    train_x_path = os.path.join(args.data_dir, "train_x.npy")
+    train_y_path = os.path.join(args.data_dir, "train_y.npy")
 
-    # 统计量
-    x_mean = np.mean(raw_x, axis=0)
-    x_std = np.std(raw_x, axis=0) + 1e-6
-
-    if raw_y.ndim == 3:
-        y_mean_np = np.mean(raw_y, axis=0)  # (num_vars, 301)
-        y_std_np = np.std(raw_y, axis=0) + 1e-6
+    # 优先使用测试集进行评估
+    if os.path.exists(test_x_path) and os.path.exists(test_y_path):
+        print("使用测试集进行评估")
+        raw_x = np.load(test_x_path).astype(np.float32)
+        raw_y = np.load(test_y_path).astype(np.float32)
+        # 使用训练集的统计量进行标准化 (保持一致性)
+        train_x = np.load(train_x_path).astype(np.float32)
+        train_y = np.load(train_y_path).astype(np.float32)
+        x_mean = np.mean(train_x, axis=0)
+        x_std = np.std(train_x, axis=0) + 1e-6
+        if train_y.ndim == 3:
+            y_mean_np = np.mean(train_y, axis=0)
+            y_std_np = np.std(train_y, axis=0) + 1e-6
+        else:
+            y_mean_np = np.mean(train_y, axis=0)
+            y_std_np = np.std(train_y, axis=0) + 1e-6
     else:
-        y_mean_np = np.mean(raw_y, axis=0)  # (301,)
-        y_std_np = np.std(raw_y, axis=0) + 1e-6
+        print("警告: 未找到测试集，使用训练集进行评估 (不推荐)")
+        raw_x = np.load(train_x_path).astype(np.float32)
+        raw_y = np.load(train_y_path).astype(np.float32)
+        x_mean = np.mean(raw_x, axis=0)
+        x_std = np.std(raw_x, axis=0) + 1e-6
+        if raw_y.ndim == 3:
+            y_mean_np = np.mean(raw_y, axis=0)
+            y_std_np = np.std(raw_y, axis=0) + 1e-6
+        else:
+            y_mean_np = np.mean(raw_y, axis=0)
+            y_std_np = np.std(raw_y, axis=0) + 1e-6
+
+    print(f"评估数据: X={raw_x.shape}, Y={raw_y.shape}")
 
     y_mean = torch.tensor(y_mean_np).float().to(DEVICE)
     y_std = torch.tensor(y_std_np).float().to(DEVICE)

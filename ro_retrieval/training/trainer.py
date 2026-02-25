@@ -54,6 +54,7 @@ class Trainer:
         patience: int = 20,
         save_every: int = 10,
         device=None,
+        var_weights: list = None,
     ):
         """
         Args:
@@ -67,6 +68,7 @@ class Trainer:
             patience: Early Stopping 容忍轮数
             save_every: 每隔多少轮保存检查点
             device: 计算设备
+            var_weights: 各变量的损失权重 [T, P, Q], 默认 [1.0, 1.0, 2.0] 加强比湿
         """
         self.data_dir = data_dir
         self.model_type = model_type
@@ -78,6 +80,7 @@ class Trainer:
         self.patience = patience
         self.save_every = save_every
         self.device = device or DEVICE
+        self.var_weights = var_weights or [1.0, 1.0, 2.0]  # 默认加强比湿权重
 
         # 训练日志
         self.train_losses = []
@@ -172,9 +175,17 @@ class Trainer:
     def _train_one_epoch(self, epoch):
         """单轮训练"""
         self.model.train()
-        loss_fn = nn.MSELoss()
         epoch_loss = 0
         n_batches = 0
+
+        # 构建加权损失的权重张量
+        if self.mode == "multi" and self.out_channels > 1:
+            weights = torch.tensor(
+                self.var_weights[:self.out_channels],
+                device=self.device, dtype=torch.float32
+            ).view(1, -1, 1)  # (1, C, 1) 用于广播
+        else:
+            weights = None
 
         pbar = tqdm(self.train_loader, desc=f"Epoch {epoch + 1}/{self.epochs} [Train]")
         for condition, x_0 in pbar:
@@ -187,7 +198,12 @@ class Trainer:
             x_t = self.schedule.q_sample(x_0, t, noise)
 
             noise_pred = self.model(x_t, t, condition)
-            loss = loss_fn(noise_pred, noise)
+
+            # 加权MSE损失
+            if weights is not None:
+                loss = torch.mean(weights * (noise_pred - noise) ** 2)
+            else:
+                loss = nn.functional.mse_loss(noise_pred, noise)
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -399,6 +415,15 @@ class Trainer:
         stats = test_dataset.get_stats()
         preds_denorm = all_preds * stats["y_std"] + stats["y_mean"]
         targets_denorm = all_targets * stats["y_std"] + stats["y_mean"]
+
+        # 如果比湿做了对数变换，需要反变换
+        if stats.get("log_transform_humidity", False) and preds_denorm.shape[1] >= 3:
+            # log10(q + 1e-6) -> q
+            preds_denorm[:, 2, :] = 10 ** preds_denorm[:, 2, :] - 1e-6
+            targets_denorm[:, 2, :] = 10 ** targets_denorm[:, 2, :] - 1e-6
+            # 确保非负
+            preds_denorm[:, 2, :] = np.clip(preds_denorm[:, 2, :], 0, None)
+            targets_denorm[:, 2, :] = np.clip(targets_denorm[:, 2, :], 0, None)
 
         # 计算评估指标
         metrics = self._compute_metrics(preds_denorm, targets_denorm)

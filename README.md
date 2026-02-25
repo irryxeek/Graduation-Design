@@ -128,6 +128,26 @@ python src/run_pipeline.py --all --model_type enhanced --var_mode multi --epochs
 streamlit run ro_retrieval/app/streamlit_app.py
 ```
 
+### 7. 消融实验
+
+```bash
+# 对比 legacy vs enhanced 模型
+python src/ablation_study.py --epochs 50 --patience 15
+
+# 指定输出目录
+python src/ablation_study.py --output_dir outputs/ablation
+```
+
+### 8. CDAAC 产品对比
+
+```bash
+# 与 CDAAC wetPf2 官方产品对比
+python src/compare_cdaac.py
+
+# 使用模型预测结果对比
+python src/compare_cdaac.py --model_pred outputs/model_predictions.npy
+```
+
 ---
 
 ## 模型架构
@@ -209,3 +229,9 @@ COSMIC atmPrf (弯曲角)          COSMIC wetPf2 (温/压/湿) 或 ERA5
 - Python ≥ 3.9
 - PyTorch ≥ 2.0
 - NumPy, SciPy, Matplotlib, xarray, netCDF4, tqdm, Streamlit
+
+---
+
+## 开发约定
+
+- **README 同步更新**: 每次对话结束后，AI 助手需更新本文档以反映项目最新状态（新增功能、修改内容、待办事项等）

@@ -9,7 +9,13 @@
       "Bash(python:*)",
       "Bash(python3:*)",
       "Bash(head:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:data.cosmic.ucar.edu)",
+      "Bash(mkdir:*)",
+      "Bash(cd D:\\\\02_Study\\\\01_Schoolwork\\\\Graduation Design:*)"
     ]
   }
 }
