@@ -15,7 +15,8 @@
       "Bash(ls:*)",
       "WebFetch(domain:data.cosmic.ucar.edu)",
       "Bash(mkdir:*)",
-      "Bash(cd D:\\\\02_Study\\\\01_Schoolwork\\\\Graduation Design:*)"
+      "Bash(cd D:\\\\02_Study\\\\01_Schoolwork\\\\Graduation Design:*)",
+      "Bash(npx skills:*)"
     ]
   }
 }
