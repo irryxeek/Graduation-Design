@@ -40,8 +40,20 @@ src/                   # 入口脚本
 ## 数据来源
 
 - 当前: COSMIC-2 atmPrf (弯曲角) + wetPf2 (温/压/湿)，CDAAC netCDF 格式
-- 计划迁移: FY-3D GNOS 掩星数据 (NSMC HDF5 格式)，待下载样本后适配
+- 计划迁移: FY-3D GNOS 掩星数据 (NSMC HDF5 格式)
 - 备选标签: ERA5 再分析数据 (37 层气压面)
+
+## FY-3D GNOS 数据下载
+
+在 SSH 远程服务器上使用 `utils/download_normal.sh` 批量下载：
+
+```bash
+chmod 777 ./download_normal.sh
+./download_normal.sh ./A202505270377795991.txt ./down
+```
+
+- 第一个参数: NSMC 订单生成的 URL 列表文件（如 `./A202505270377795991.txt`）
+- 第二个参数: 数据本地存放目录（如 `./down`）
 
 ## 已知问题
 
