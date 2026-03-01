@@ -28,6 +28,9 @@
       "WebFetch(domain:www.mdpi.com)",
       "WebFetch(domain:data.cma.cn)",
       "Bash(git add .)"
+    ],
+    "additionalDirectories": [
+      "/Users/placebo/Downloads"
     ]
   }
 }
