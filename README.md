@@ -45,8 +45,9 @@
 │   └── legacy/                # 早期独立脚本 (已归档)
 │
 ├── utils/                     # 辅助工具
-│   ├── download_era5_sample.py
-│   └── visualize.py
+│   ├── download_normal.sh     # FY-3D GNOS 数据批量下载脚本
+│   ├── visualize.py
+│   └── down/                  # FY-3D GNOS L1 数据 (2025-01, ~30k 文件)
 │
 ├── Data/                      # 数据目录 (gitignore)
 │   ├── Sample/                # 原始数据样本
@@ -217,9 +218,49 @@ COSMIC atmPrf (弯曲角)          COSMIC wetPf2 (温/压/湿) 或 ERA5
 
 ---
 
+## 训练结果
+
+### 最新训练 (2026-03-01)
+
+| 项目 | 详情 |
+|------|------|
+| 模型 | EnhancedConditionalUNet1D (多变量, 3 通道) |
+| 参数量 | 1,115,651 |
+| 数据源 | COSMIC-2 atmPrf (Day 001) |
+| 样本数 | 1,830 (QC 通过率 55.3%) |
+| 划分 | train 1,281 / val 274 / test 275 |
+| 最优 val_loss | **0.013806** (Epoch 64) |
+| 早停轮次 | Epoch 84 (patience=20) |
+| 训练时长 | ~0.8 分钟 (GPU) |
+| 权重文件 | `enhanced_ro_diffusion_best.pth` (4.3 MB) |
+
+<details>
+<summary>训练损失曲线摘要</summary>
+
+- Epoch 1: train_loss=1.091, val_loss=0.658
+- Epoch 10: train_loss=0.050, val_loss=0.038
+- Epoch 20: train_loss=0.032, val_loss=0.030
+- Epoch 40: train_loss=0.025, val_loss=0.024
+- Epoch 64: train_loss=0.020, val_loss=**0.014** (best)
+- Epoch 84: train_loss=0.018, val_loss=0.018 (early stop)
+
+</details>
+
+### 数据统计 (标准化前)
+
+| 变量 | 均值 | 标准差 | 备注 |
+|------|------|--------|------|
+| 弯曲角 (输入) | log10 变换后 Z-Score | — | 301 高度层 |
+| 温度 | 237.6 K | 27.9 K | 正常范围 |
+| 气压 | 132.4 hPa | 241.7 hPa | 正常范围 |
+| 湿度 | 0 | 0 | 全零 (无 wetPf2 数据) |
+
+---
+
 ## 数据来源
 
 - **COSMIC-2**: [CDAAC](https://data.cosmic.ucar.edu/) — `atmPrf` (弯曲角) + `wetPf2` (温/压/湿)
+- **FY-3D GNOS**: [NSMC](https://satellite.nsmc.org.cn/) — L1 级掩星观测数据 (已下载 2025 年 1 月整月，30,794 个文件，~20 GB，存储于 `utils/down/`)
 - **ERA5**: [ECMWF](https://cds.climate.copernicus.eu/) — 37 层气压面再分析数据 (温度 / 比湿 / 位势高度)
 
 ---

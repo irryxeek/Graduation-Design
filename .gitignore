@@ -2,6 +2,14 @@
 *.pth
 *.nc
 *.npy
+*.NC
+*.SP3
+
+# FY-3D GNOS 原始数据 (~20GB)
+utils/down/
+
+# 训练日志
+training_output.log
 
 # 输出目录
 outputs/
