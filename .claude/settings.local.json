@@ -30,7 +30,10 @@
       "Bash(git add .)",
       "Bash(du -sh \"/d/02_Study/01_Schoolwork/Graduation Design/Data\"/*)",
       "Bash(find /root/autodl-tmp/Graduation-Design/utils/down -name \"*AEG*\" -type f | head -1 | xargs -I {} python3 -c \"import netCDF4; ds = netCDF4.Dataset\\('{}'\\); print\\('Variables:', list\\(ds.variables.keys\\(\\)\\)\\); print\\('Dimensions:', dict\\(ds.dimensions\\)\\); print\\('Global attrs:', dict\\(ds.__dict__\\)\\); ds.close\\(\\)\" 2>&1 | head -50)",
-      "Bash(find /root/autodl-tmp/Graduation-Design -name \"*.ipynb\" -o -name \"*test*.py\" 2>/dev/null | grep -i fy)"
+      "Bash(find /root/autodl-tmp/Graduation-Design -name \"*.ipynb\" -o -name \"*test*.py\" 2>/dev/null | grep -i fy)",
+      "Read(//Users/placebo/.ssh/**)",
+      "Bash(git add .claude/settings.local.json)",
+      "Bash(git rebase --continue)"
     ],
     "additionalDirectories": [
       "/Users/placebo/Downloads"
