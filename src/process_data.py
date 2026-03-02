@@ -127,6 +127,9 @@ def main_fy3d(args):
         print(f"  最大文件数 : {args.max_files}")
     print()
 
+    # FY-3D 输出到独立子目录
+    fy3d_output_dir = os.path.join(args.output_dir, 'fy3d')
+
     # 仅探索模式
     if args.explore:
         explore_fy3d_directory(args.fy3d_dir, n_samples=3)
@@ -134,7 +137,7 @@ def main_fy3d(args):
 
     result = run_fy3d_pipeline(
         data_root=args.fy3d_dir,
-        output_dir=args.output_dir,
+        output_dir=fy3d_output_dir,
         strict_qc=not args.no_strict_qc,
         do_split=not args.no_split,
         use_refractivity=args.use_refractivity,

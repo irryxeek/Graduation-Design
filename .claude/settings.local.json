@@ -28,7 +28,9 @@
       "WebFetch(domain:www.mdpi.com)",
       "WebFetch(domain:data.cma.cn)",
       "Bash(git add .)",
-      "Bash(du -sh \"/d/02_Study/01_Schoolwork/Graduation Design/Data\"/*)"
+      "Bash(du -sh \"/d/02_Study/01_Schoolwork/Graduation Design/Data\"/*)",
+      "Bash(find /root/autodl-tmp/Graduation-Design/utils/down -name \"*AEG*\" -type f | head -1 | xargs -I {} python3 -c \"import netCDF4; ds = netCDF4.Dataset\\('{}'\\); print\\('Variables:', list\\(ds.variables.keys\\(\\)\\)\\); print\\('Dimensions:', dict\\(ds.dimensions\\)\\); print\\('Global attrs:', dict\\(ds.__dict__\\)\\); ds.close\\(\\)\" 2>&1 | head -50)",
+      "Bash(find /root/autodl-tmp/Graduation-Design -name \"*.ipynb\" -o -name \"*test*.py\" 2>/dev/null | grep -i fy)"
     ],
     "additionalDirectories": [
       "/Users/placebo/Downloads"
