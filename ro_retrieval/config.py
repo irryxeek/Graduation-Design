@@ -5,7 +5,12 @@
 """
 
 import os
-import torch
+
+try:
+    import torch
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+except ImportError:
+    DEVICE = None  # torch 不可用时 (纯数据处理场景)
 
 # ==================== 路径配置 ====================
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,9 +22,6 @@ OUTPUT_DIR = os.path.join(PROJECT_ROOT, "outputs")     # 输出目录
 LOGS_DIR = os.path.join(OUTPUT_DIR, "logs")            # 训练日志
 FIGURES_DIR = os.path.join(OUTPUT_DIR, "figures")      # 图片输出
 EVAL_DIR = os.path.join(OUTPUT_DIR, "evaluation")      # 评估结果
-
-# ==================== 设备 ====================
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ==================== 数据处理参数 ====================
 STD_HEIGHT = 301              # 标准化高度层数 (0~60km, 301个点)
