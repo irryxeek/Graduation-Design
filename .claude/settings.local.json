@@ -27,7 +27,8 @@
       "WebFetch(domain:amt.copernicus.org)",
       "WebFetch(domain:www.mdpi.com)",
       "WebFetch(domain:data.cma.cn)",
-      "Bash(git add .)"
+      "Bash(git add .)",
+      "Bash(du -sh \"/d/02_Study/01_Schoolwork/Graduation Design/Data\"/*)"
     ],
     "additionalDirectories": [
       "/Users/placebo/Downloads"

@@ -14,9 +14,10 @@ ro_retrieval/          # 核心包
   data/                # 数据处理子包
     dataset.py         # RODataset, ROMultiVarDataset
     process_enhanced.py # 预处理流水线 (QC + 插值 + 标准化)
+    fy3d_process.py    # FY-3D GNOS 数据处理
 
 src/                   # 入口脚本
-  process_data.py      # 数据预处理
+  process_data.py      # 数据预处理 (--source cosmic/fy3d)
   train.py             # 训练 (--mode single/multi --model legacy/enhanced)
   evaluate.py          # 批量评估 (--sampler ddim/ddpm)
   run_pipeline.py      # 端到端流水线 (--all)
@@ -63,7 +64,7 @@ src/                   # 入口脚本
 
 ## 数据来源
 
-- 当前: COSMIC-2 atmPrf (弯曲角) + wetPf2 (温/压/湿)，CDAAC netCDF 格式
+- COSMIC-2: atmPrf (弯曲角) + wetPf2 (温/压/湿)，CDAAC netCDF 格式
 - **已下载**: FY-3D GNOS 掩星 L1 数据 (NSMC netCDF 格式)
   - 时间范围: 2025-01-01 ~ 2025-01-31 (整月)
   - 文件数量: 30,794 个 (.NC)
@@ -72,17 +73,38 @@ src/                   # 入口脚本
   - 文件命名: `FY3D_GNOSX_GBAL_L1_YYYYMMDD_HHMM_<卫星标识>_MS.NC`
 - 备选标签: ERA5 再分析数据 (37 层气压面)
 
-## FY-3D GNOS 数据下载
+## FY-3D GNOS 数据
 
+### 文件格式
+- NetCDF (.NC)，每文件一次掩星事件
+- 文件名: `FY3D_GNOSX_GBAL_L1_YYYYMMDD_HHMM_XEGnn_MS.NC`
+  - AEG = GPS 掩星，IEG = BDS(北斗) 掩星，nn = PRN 编号
+- 质量标识: qc=100 可信，qc=20 不可信
+- 变量 (需按实际文件确认): MSL_alt, Bend_ang, Temp, Pres 等
+
+### 数据下载
 在 SSH 远程服务器上使用 `utils/download_normal.sh` 批量下载：
 
 ```bash
 chmod 777 ./download_normal.sh
-./download_normal.sh ./A202505270377795991.txt ./down
+./download_normal.sh ./A202602281033086669.txt ./down
 ```
 
-- 第一个参数: NSMC 订单生成的 URL 列表文件（如 `./A202505270377795991.txt`）
-- 第二个参数: 数据本地存放目录（如 `./down`）
+- 第一个参数: NSMC 订单生成的 URL 列表文件
+- 第二个参数: 数据本地存放目录
+- 下载后放入 `Data/FY-3/raw/` 目录
+
+### 数据预处理
+```bash
+# 探索数据格式 (下载后首先执行)
+python src/process_data.py --source fy3d --fy3d_dir Data/FY-3/raw --explore
+
+# 正式处理
+python src/process_data.py --source fy3d --fy3d_dir Data/FY-3/raw
+
+# 调试 (只处理前 100 个文件)
+python src/process_data.py --source fy3d --fy3d_dir Data/FY-3/raw --max-files 100
+```
 
 ### 已下载数据
 
