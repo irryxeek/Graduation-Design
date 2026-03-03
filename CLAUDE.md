@@ -65,57 +65,76 @@ src/                   # 入口脚本
 ## 数据来源
 
 - COSMIC-2: atmPrf (弯曲角) + wetPf2 (温/压/湿)，CDAAC netCDF 格式
-- **已下载**: FY-3D GNOS 掩星 L1 数据 (NSMC netCDF 格式)
+- **FY-3D GNOS L2 ATP 数据** (已处理完成)
   - 时间范围: 2025-01-01 ~ 2025-01-31 (整月)
-  - 文件数量: 30,794 个 (.NC)
-  - 数据量: ~20 GB
+  - 文件数量: 15,317 个 L2 ATP 文件
+  - 数据量: 2.2 GB
+  - 存储位置: `utils/atp/`
+  - 处理后数据: `Data/Processed_ATP/`
+  - 成功处理: 13,088 个廓线 (通过率 85.4%)
+  - 训练集: 9,161 / 验证集: 1,963 / 测试集: 1,964
+- FY-3D GNOS L1 数据 (原始观测，已弃用)
+  - 文件数量: 30,794 个
   - 存储位置: `utils/down/`
-  - 文件命名: `FY3D_GNOSX_GBAL_L1_YYYYMMDD_HHMM_<卫星标识>_MS.NC`
-- 备选标签: ERA5 再分析数据 (37 层气压面)
+  - 问题: L1 数据需要自行推导弯曲角，技术难度大
 
-## FY-3D GNOS 数据
+## FY-3D GNOS ATP 数据处理 (已完成)
 
-### 文件格式
-- NetCDF (.NC)，每文件一次掩星事件
-- 文件名: `FY3D_GNOSX_GBAL_L1_YYYYMMDD_HHMM_XEGnn_MS.NC`
-  - AEG = GPS 掩星，IEG = BDS(北斗) 掩星，nn = PRN 编号
-- 质量标识: qc=100 可信，qc=20 不可信
-- 变量 (需按实际文件确认): MSL_alt, Bend_ang, Temp, Pres 等
+### L2 ATP 数据格式
 
-### 数据下载
-在 SSH 远程服务器上使用 `utils/download_normal.sh` 批量下载：
+FY-3D GNOS L2 ATP (大气廓线) 数据是已处理的产品，包含：
+- **弯曲角**: `Opt_Bend_ang` (优化后的弯曲角, rad)
+- **冲击参数**: `Opt_Impact_parm` (地心距离, km)
+- **温度**: `Temp` (K)
+- **气压**: `Pres` (mb)
+- **密度**: `Dens` (g/m³)
+- **高度**: `MSL_alt` (海拔高度, km)
+
+### 数据处理流程
 
 ```bash
-chmod 777 ./download_normal.sh
-./download_normal.sh ./A202602281033086669.txt ./down
+# 处理 ATP 数据
+python ro_retrieval/data/atp_process.py --atp-dir utils/atp --output-dir Data/Processed_ATP
+
+# 测试处理 (前 100 个文件)
+python ro_retrieval/data/atp_process.py --atp-dir utils/atp --output-dir Data/Processed_ATP --max-files 100
 ```
 
-- 第一个参数: NSMC 订单生成的 URL 列表文件
-- 第二个参数: 数据本地存放目录
-- 下载后放入 `Data/FY-3/raw/` 目录
-
-### 数据预处理
-```bash
-# 探索数据格式 (下载后首先执行)
-python src/process_data.py --source fy3d --fy3d_dir Data/FY-3/raw --explore
-
-# 正式处理
-python src/process_data.py --source fy3d --fy3d_dir Data/FY-3/raw
-
-# 调试 (只处理前 100 个文件)
-python src/process_data.py --source fy3d --fy3d_dir Data/FY-3/raw --max-files 100
-```
-
-### 已下载数据
+### 处理结果
 
 | 项目 | 详情 |
 |------|------|
-| 数据集 | FY-3D GNOS L1 级掩星观测 |
-| 时间范围 | 2025-01-01 ~ 2025-01-31 |
-| 文件数量 | 30,794 个 |
-| 数据量 | ~20 GB |
-| 存储路径 | `utils/down/` |
-| 文件格式 | netCDF (.NC) |
+| 原始文件数 | 15,317 个 |
+| 成功处理 | 13,088 个廓线 |
+| 失败 | 2,229 个 |
+| 通过率 | 85.4% |
+| 训练集 | 9,161 个 |
+| 验证集 | 1,963 个 |
+| 测试集 | 1,964 个 |
+
+### 数据统计 (标准化前)
+
+| 变量 | 均值 | 标准差 | 备注 |
+|------|------|--------|------|
+| 弯曲角 (log10) | -3.582 | 1.063 | log10 变换后 |
+| 温度 | 240.8 K | 22.8 K | 正常范围 |
+| 气压 | 101.4 mb | 193.5 mb | 正常范围 |
+
+**注意**: ATP 数据不包含湿度信息，因此输出为 2 通道（温度+气压）。
+
+### 关键技术点
+
+1. **高度坐标转换**: 冲击参数 (Impact_parm) 是地心距离，需转换为海拔高度
+   ```python
+   msl_alt = impact_parm - curv  # curv 为曲率半径
+   ```
+
+2. **质量控制**:
+   - qc=100 的文件才处理
+   - 物理合理性检查（温度 150-350 K，气压 0.01-1100 mb）
+   - 气压单调递减检查
+
+3. **插值**: 线性插值到 0-60 km 标准高度网格 (301 点)
 
 ## FY-3D GNOS L1 数据分析 (进行中)
 
@@ -184,12 +203,40 @@ excess phase (L1, L2)
 3. **标签数据**: 无论采用哪种方案，均需 ERA5 再分析数据作为温度/气压/湿度真值标签
 4. **时空匹配**: 根据掩星事件的经纬度/时间，匹配最近的 ERA5 格点
 
+## FY-3D ATP 模型训练 (进行中)
+
+### 训练配置
+
+```bash
+python src/train.py --mode multi --model enhanced \
+  --data_dir Data/Processed_ATP --epochs 100 --batch_size 64 --patience 20
+```
+
+| 项目 | 详情 |
+|------|------|
+| 模型 | EnhancedConditionalUNet1D (交叉注意力) |
+| 参数量 | 1,115,330 |
+| 数据集 | FY-3D GNOS L2 ATP (2025-01) |
+| 训练集 | 9,161 个廓线 |
+| 验证集 | 1,963 个廓线 |
+| 测试集 | 1,964 个廓线 |
+| 输出通道 | 2 (温度 + 气压) |
+| 设备 | Tesla V100-PCIE-32GB |
+| Batch Size | 64 |
+| Learning Rate | 1e-4 |
+| Early Stopping | patience=20 |
+
+### 训练状态
+
+训练已启动，日志保存在 `training.log`。
+
 ## 已知问题
 
-- 湿度通道全零: 当前 COSMIC Sample 仅含 atmPrf 文件, 无 wetPf2 数据, 湿度标签填零
-- 训练数据较少: 仅使用 1 天 COSMIC 数据 (1830 样本), 模型泛化能力有限
-- FY-3D GNOS L1 数据弯曲角推导尚未成功 (符号/公式待调试)
-- FY-3D 数据缺少标签 (温度/气压/湿度), 需引入 ERA5 再分析数据
+- ~~湿度通道全零~~: ATP 数据不包含湿度，改为 2 通道输出（温度+气压）
+- ~~训练数据较少~~: 已使用 FY-3D ATP 数据（13,088 样本），数据量充足
+- ~~FY-3D GNOS L1 数据弯曲角推导失败~~: 改用 L2 ATP 数据，已包含处理好的弯曲角和大气廓线
+- ~~FY-3D 数据缺少标签~~: L2 ATP 数据自带温度/气压标签
+- **推理结果质量差**: 模型在低时间步（t=0-200）性能不足，导致推理产生物理上不可能的值（详见下方）
 
 ## 开发约定
 
