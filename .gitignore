@@ -7,6 +7,8 @@
 
 # FY-3D GNOS 原始数据 (~20GB)
 utils/down/
+utils/Jan/
+utils/atp/
 
 # 训练日志
 training_output.log

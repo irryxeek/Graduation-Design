@@ -1,0 +1,73 @@
+
+libgomp: Invalid value for environment variable OMP_NUM_THREADS
+/root/autodl-tmp/Graduation-Design/src/inference_atp_ddim_debug.py:93: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  model.load_state_dict(torch.load('enhanced_ro_diffusion_best.pth', map_location=device))
+使用设备: cuda
+
+=== 加载测试数据 ===
+测试集: 50 样本
+
+=== 加载模型 ===
+模型加载成功
+
+============================================================
+测试配置: DDPM-1000
+============================================================
+DDPM 1000 步:   0%|          | 0/4 [00:00<?, ?it/s]DDPM 1000 步:  25%|██▌       | 1/4 [00:06<00:20,  6.87s/it]DDPM 1000 步:  50%|█████     | 2/4 [00:12<00:12,  6.43s/it]DDPM 1000 步:  75%|███████▌  | 3/4 [00:19<00:06,  6.31s/it]DDPM 1000 步: 100%|██████████| 4/4 [00:25<00:00,  6.31s/it]DDPM 1000 步: 100%|██████████| 4/4 [00:25<00:00,  6.37s/it]
+
+温度 - RMSE: 24.14 K, Bias: -2.23 K, Corr: 0.2421
+气压 - RMSE: 143.98 mb, Bias: -38.98 mb, Corr: 0.7526
+
+============================================================
+测试配置: DDIM-50-eta0.0
+============================================================
+DDIM 50 步:   0%|          | 0/4 [00:00<?, ?it/s]DDIM 50 步:  25%|██▌       | 1/4 [00:00<00:01,  2.51it/s]DDIM 50 步:  50%|█████     | 2/4 [00:00<00:00,  2.85it/s]DDIM 50 步:  75%|███████▌  | 3/4 [00:01<00:00,  2.98it/s]DDIM 50 步: 100%|██████████| 4/4 [00:01<00:00,  3.07it/s]DDIM 50 步: 100%|██████████| 4/4 [00:01<00:00,  2.97it/s]
+
+温度 - RMSE: 50.64 K, Bias: -0.04 K, Corr: -0.0119
+气压 - RMSE: 7034.10 mb, Bias: 3593.88 mb, Corr: -0.0447
+
+============================================================
+测试配置: DDIM-100-eta0.0
+============================================================
+DDIM 100 步:   0%|          | 0/4 [00:00<?, ?it/s]DDIM 100 步:  25%|██▌       | 1/4 [00:00<00:01,  1.61it/s]DDIM 100 步:  50%|█████     | 2/4 [00:01<00:01,  1.60it/s]DDIM 100 步:  75%|███████▌  | 3/4 [00:01<00:00,  1.61it/s]DDIM 100 步: 100%|██████████| 4/4 [00:02<00:00,  1.60it/s]DDIM 100 步: 100%|██████████| 4/4 [00:02<00:00,  1.60it/s]
+
+温度 - RMSE: 49.60 K, Bias: -0.35 K, Corr: -0.0174
+气压 - RMSE: 4994.83 mb, Bias: 2637.02 mb, Corr: -0.0513
+
+============================================================
+测试配置: DDIM-200-eta0.0
+============================================================
+DDIM 200 步:   0%|          | 0/4 [00:00<?, ?it/s]DDIM 200 步:  25%|██▌       | 1/4 [00:01<00:03,  1.25s/it]DDIM 200 步:  50%|█████     | 2/4 [00:02<00:02,  1.24s/it]DDIM 200 步:  75%|███████▌  | 3/4 [00:03<00:01,  1.24s/it]DDIM 200 步: 100%|██████████| 4/4 [00:04<00:00,  1.25s/it]DDIM 200 步: 100%|██████████| 4/4 [00:04<00:00,  1.25s/it]
+
+温度 - RMSE: 48.98 K, Bias: -0.44 K, Corr: -0.0123
+气压 - RMSE: 4212.04 mb, Bias: 2246.71 mb, Corr: -0.0518
+
+============================================================
+测试配置: DDIM-100-eta0.5
+============================================================
+DDIM 100 步:   0%|          | 0/4 [00:00<?, ?it/s]DDIM 100 步:  25%|██▌       | 1/4 [00:00<00:02,  1.34it/s]DDIM 100 步:  50%|█████     | 2/4 [00:01<00:01,  1.45it/s]DDIM 100 步:  75%|███████▌  | 3/4 [00:02<00:00,  1.50it/s]DDIM 100 步: 100%|██████████| 4/4 [00:02<00:00,  1.52it/s]DDIM 100 步: 100%|██████████| 4/4 [00:02<00:00,  1.49it/s]
+
+温度 - RMSE: nan K, Bias: nan K, Corr: nan
+气压 - RMSE: nan mb, Bias: nan mb, Corr: nan
+
+============================================================
+测试配置: DDIM-200-eta0.5
+============================================================
+DDIM 200 步:   0%|          | 0/4 [00:00<?, ?it/s]DDIM 200 步:  25%|██▌       | 1/4 [00:01<00:03,  1.29s/it]DDIM 200 步:  50%|█████     | 2/4 [00:02<00:02,  1.28s/it]DDIM 200 步:  75%|███████▌  | 3/4 [00:03<00:01,  1.28s/it]DDIM 200 步: 100%|██████████| 4/4 [00:05<00:00,  1.28s/it]DDIM 200 步: 100%|██████████| 4/4 [00:05<00:00,  1.28s/it]
+
+温度 - RMSE: nan K, Bias: nan K, Corr: nan
+气压 - RMSE: nan mb, Bias: nan mb, Corr: nan
+
+============================================================
+结果汇总
+============================================================
+配置                         温度CC       气压CC       温度RMSE       气压RMSE
+------------------------------------------------------------
+DDPM-1000                0.2421     0.7526        24.14       143.98
+DDIM-50-eta0.0          -0.0119    -0.0447        50.64      7034.10
+DDIM-100-eta0.0         -0.0174    -0.0513        49.60      4994.83
+DDIM-200-eta0.0         -0.0123    -0.0518        48.98      4212.04
+DDIM-100-eta0.5             nan        nan          nan          nan
+DDIM-200-eta0.5             nan        nan          nan          nan
+
+结果保存至: Results/DDIM_Debug

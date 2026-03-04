@@ -44,7 +44,13 @@
       "Bash(find . -type d -name \"*FEB*\" -o -name \"*feb*\" 2>/dev/null | head -10)",
       "Bash(python src/inference_atp.py 2>&1 | tee inference_fixed.log)",
       "Bash(python src/inference_atp.py 2>&1 | tee inference_final.log)",
-      "Bash(python src/inference_atp_ddpm.py 2>&1 | tee inference_ddpm.log)"
+      "Bash(python src/inference_atp_ddpm.py 2>&1 | tee inference_ddpm.log)",
+      "Bash(python src/inference_atp_ddim_debug.py 2>&1 | tee ddim_debug.log)",
+      "Bash(nvidia-smi)",
+      "Bash(python src/inference_atp_ddim_debug.py 2>&1 | tee ddim_debug_new.log)",
+      "Bash(git add \"开发问题记录.md\")",
+      "Bash(git commit -m \"$\\(cat <<'EOF'\n完成 FY-3D ATP 模型训练和 DDIM 采样调试\n\n主要更新:\n- 修复气压归一化问题 \\(log10 变换\\)\n- 完成 DDPM 1000 步推理验证 \\(气压 CC=0.75\\)\n- 调试 DDIM 采样 \\(50/100/200 步均失败\\)\n- 更新 CLAUDE.md 和开发问题记录\n- 添加推理结果可视化 \\(散点图/诊断图\\)\n- 新增数据集合并和测试脚本\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git remote set-url origin git@github.com:irryxeek/Graduation-Design.git)"
     ],
     "additionalDirectories": [
       "/Users/placebo/Downloads"
