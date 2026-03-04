@@ -33,7 +33,18 @@
       "Bash(find /root/autodl-tmp/Graduation-Design -name \"*.ipynb\" -o -name \"*test*.py\" 2>/dev/null | grep -i fy)",
       "Read(//Users/placebo/.ssh/**)",
       "Bash(git add .claude/settings.local.json)",
-      "Bash(git rebase --continue)"
+      "Bash(git rebase --continue)",
+      "Bash(nvidia-smi 2>&1 | head -10)",
+      "Bash(python src/train.py --mode multi --model enhanced --data_dir Data/Processed_ATP --epochs 100 --batch_size 64 --patience 20 2>&1 | tee training.log)",
+      "Bash(python src/train.py --mode multi --model enhanced --data_dir Data/Processed_ATP --epochs 100 --batch_size 64 --patience 20 2>&1 | tee training_fy3d.log)",
+      "Bash(while true; do sleep 60; tail -5 /tmp/claude-0/-root-autodl-tmp-Graduation-Design/tasks/bskz7qraj.output | grep -E \"\\(Epoch|Early stopping|训练完成\\)\" && break; done)",
+      "Bash(git add CLAUDE.md 开发问题记录.md ro_retrieval/data/atp_process.py src/compare_models.py src/diagnose_inference.py src/inference_atp.py src/test_noise_prediction.py src/train_weighted.py)",
+      "Bash(git commit -m \"$\\(cat <<'EOF'\n添加 FY-3D ATP 数据处理和模型推理功能\n\n- 新增 ATP 数据处理模块 \\(ro_retrieval/data/atp_process.py\\)\n  - 处理 FY-3D GNOS L2 ATP 大气廓线数据\n  - 实现质量控制、插值和标准化\n  - 通过率 86.2% \\(13,207 个有效廓线\\)\n\n- 新增推理和诊断脚本\n  - inference_atp.py: ATP 数据推理\n  - diagnose_inference.py: 推理结果诊断\n  - test_noise_prediction.py: 噪声预测能力测试\n  - compare_models.py: 模型性能对比\n  - train_weighted.py: 时间步加权训练\n\n- 更新项目文档\n  - CLAUDE.md: 更新 ATP 数据处理和训练结果\n  - 开发问题记录.md: 记录开发中遇到的问题和解决方案\n\n主要发现：\n- 模型在低时间步 \\(t=0-200\\) 性能不足，导致推理质量差\n- 需要进一步优化训练策略或增加数据量\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push origin main)",
+      "Bash(find . -type d -name \"*FEB*\" -o -name \"*feb*\" 2>/dev/null | head -10)",
+      "Bash(python src/inference_atp.py 2>&1 | tee inference_fixed.log)",
+      "Bash(python src/inference_atp.py 2>&1 | tee inference_final.log)",
+      "Bash(python src/inference_atp_ddpm.py 2>&1 | tee inference_ddpm.log)"
     ],
     "additionalDirectories": [
       "/Users/placebo/Downloads"

@@ -139,6 +139,7 @@ def ddim_sample(model, condition, shape, schedule,
 
         # 预测 x0
         pred_x0 = (img - torch.sqrt(1 - alpha_t) * noise_pred) / torch.sqrt(alpha_t)
+        pred_x0 = torch.clamp(pred_x0, -2.5, 2.5)  # 裁剪到训练数据范围
 
         # 方向项
         sigma_t = eta * torch.sqrt(

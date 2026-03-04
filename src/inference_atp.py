@@ -98,6 +98,11 @@ def main():
         pred_denorm[:, i, :] = denormalize(predictions[:, i, :], stats['y_mean'][i], stats['y_std'][i])
         true_denorm[:, i, :] = denormalize(test_y[:, i, :], stats['y_mean'][i], stats['y_std'][i])
 
+    # 气压从 log10 空间转回
+    if stats.get('pressure_log_transformed', False):
+        pred_denorm[:, 1, :] = 10 ** pred_denorm[:, 1, :]
+        true_denorm[:, 1, :] = 10 ** true_denorm[:, 1, :]
+
     # 计算指标
     print("\n=== 评估指标 ===")
     temp_metrics = calculate_metrics(pred_denorm[:, 0, :], true_denorm[:, 0, :])

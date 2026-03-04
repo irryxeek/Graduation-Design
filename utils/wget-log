@@ -1,0 +1,18 @@
+--2026-03-02 15:20:15--  ftp://A202603020354053472:*password*@ftp.nsmc.org.cn/A2026030203540534720010/FY3D_GNOSX_GBAL_L2_ATP_MLT_NUL_20250112_0723_G13XX_MS.NC
+           => ‘./down/FY3D_GNOSX_GBAL_L2_ATP_MLT_NUL_20250112_0723_G13XX_MS.NC’
+Resolving ftp.nsmc.org.cn (ftp.nsmc.org.cn)... 111.205.50.127, 106.120.82.93
+Connecting to ftp.nsmc.org.cn (ftp.nsmc.org.cn)|111.205.50.127|:21... connected.
+Logging in as A202603020354053472 ... Logged in!
+==> SYST ... done.    ==> PWD ... done.
+==> TYPE I ... done.  ==> CWD (1) /A2026030203540534720010 ... done.
+==> SIZE FY3D_GNOSX_GBAL_L2_ATP_MLT_NUL_20250112_0723_G13XX_MS.NC ... 162976
+==> PASV ... done.    ==> RETR FY3D_GNOSX_GBAL_L2_ATP_MLT_NUL_20250112_0723_G13XX_MS.NC ... done.
+Length: 162976 (159K) (unauthoritative)
+
+     0K .......... .......... .......... .......... .......... 31%  527K 0s
+    50K .......... .......... .......... .......... .......... 62% 1.35M 0s
+   100K .......... .......... .......... .......... .......... 94% 60.5M 0s
+   150K .........                                             100% 53.9M=0.1s
+
+2026-03-02 15:20:15 (1.18 MB/s) - ‘./down/FY3D_GNOSX_GBAL_L2_ATP_MLT_NUL_20250112_0723_G13XX_MS.NC’ saved [162976]
+
