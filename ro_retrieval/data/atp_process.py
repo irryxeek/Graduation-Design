@@ -142,9 +142,12 @@ class ATPProcessor:
         # 标准化弯曲角 (log10 变换)
         bend_ang_log = np.log10(np.abs(bend_ang_interp) + 1e-6)
 
+        # 标准化气压 (log10 变换)
+        pres_log = np.log10(pres_interp)
+
         # 组装输入和标签
         X = bend_ang_log  # (301,)
-        Y = np.stack([temp_interp, pres_interp], axis=0)  # (2, 301) - 暂不包含湿度
+        Y = np.stack([temp_interp, pres_log], axis=0)  # (2, 301) - 温度 + log10(气压)
 
         return X, Y
 
