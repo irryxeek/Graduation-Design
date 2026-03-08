@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo $HTTP_PROXY $HTTPS_PROXY $http_proxy $https_proxy)"
+    ],
+    "additionalDirectories": [
+      "/Users/placebo/.ssh",
+      "/Users/placebo/Projects/Graduation-Design/docs/midterm"
+    ]
+  }
+}

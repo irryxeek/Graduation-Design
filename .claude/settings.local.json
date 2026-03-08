@@ -50,7 +50,12 @@
       "Bash(python src/inference_atp_ddim_debug.py 2>&1 | tee ddim_debug_new.log)",
       "Bash(git add \"开发问题记录.md\")",
       "Bash(git commit -m \"$\\(cat <<'EOF'\n完成 FY-3D ATP 模型训练和 DDIM 采样调试\n\n主要更新:\n- 修复气压归一化问题 \\(log10 变换\\)\n- 完成 DDPM 1000 步推理验证 \\(气压 CC=0.75\\)\n- 调试 DDIM 采样 \\(50/100/200 步均失败\\)\n- 更新 CLAUDE.md 和开发问题记录\n- 添加推理结果可视化 \\(散点图/诊断图\\)\n- 新增数据集合并和测试脚本\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git remote set-url origin git@github.com:irryxeek/Graduation-Design.git)"
+      "Bash(git remote set-url origin git@github.com:irryxeek/Graduation-Design.git)",
+      "Bash(textutil -convert txt -stdout \"/Users/placebo/Projects/Graduation-Design/docs/defense/林逸飞-220110814-本科毕业设计开题报告.docx\" 2>/dev/null | head -500)",
+      "Bash(textutil -convert txt -stdout \"/Users/placebo/Projects/Graduation-Design/docs/defense/林逸飞-220110814-本科毕业设计开题报告.docx\" 2>/dev/null | tail -100)",
+      "Bash(pip3 install python-docx)",
+      "Bash(pip3 install --user python-docx)",
+      "Bash(pip3 install --break-system-packages python-docx)"
     ],
     "additionalDirectories": [
       "/Users/placebo/Downloads"
