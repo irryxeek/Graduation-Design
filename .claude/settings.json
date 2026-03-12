@@ -1,11 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "Bash(echo $HTTP_PROXY $HTTPS_PROXY $http_proxy $https_proxy)"
+      "Bash(echo $HTTP_PROXY $HTTPS_PROXY $http_proxy $https_proxy)",
+      "Read(//c/Users/sense/.claude/**)",
+      "Read(//c/Users/sense/.claude/skills/**)",
+      "Bash(del \"c:\\\\Users\\\\sense\\\\.claude\\\\skills\\\\academic-writing.md\")",
+      "Read(//c/Users/sense/.agents/skills/docx/**)",
+      "Bash(chcp 65001)",
+      "Bash(python -c \":*)",
+      "Bash(pandoc \"D:\\\\02_Study\\\\01_Schoolwork\\\\Graduation Design\\\\docs\\\\midterm\\\\中期 - v2.0.docx\" -t markdown)",
+      "Bash(dir \"D:\\\\02_Study\\\\01_Schoolwork\\\\Graduation Design\\\\docs\\\\midterm\\\\中期*\")",
+      "Bash(PYTHONPATH=~/.claude/skills/docx/scripts/office python ~/.claude/skills/docx/scripts/office/pack.py docs/midterm/unpacked_fixed/ \"docs/midterm/中期 - v2.0_fixed.docx\" --original \"docs/midterm/中期 - v2.0_fixed.docx\")",
+      "Bash(pandoc --track-changes=all \"docs/midterm/中期 - v2.0_fixed.docx\" -o /tmp/midterm_text.md)",
+      "Read(//tmp/**)",
+      "Read(//d/tmp/**)",
+      "Bash(xxd)"
     ],
     "additionalDirectories": [
       "/Users/placebo/.ssh",
-      "/Users/placebo/Projects/Graduation-Design/docs/midterm"
+      "/Users/placebo/Projects/Graduation-Design/docs/midterm",
+      "c:\\Users\\sense\\.claude\\skills\\academic-writing",
+      "\\tmp",
+      "d:\\tmp"
     ]
   }
 }

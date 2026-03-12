@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <dcterms:created xsi:type="dcterms:W3CDTF">2026-03-08T11:21:00Z</dcterms:created>
+  <dc:creator>zhanhj</dc:creator>
+  <cp:lastModifiedBy>Rin.</cp:lastModifiedBy>
+  <cp:lastPrinted>2024-10-17T08:25:00Z</cp:lastPrinted>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-03-08T11:56:47Z</dcterms:modified>
+  <dc:title>第1章绪论</dc:title>
+  <cp:revision>2</cp:revision>
+</cp:coreProperties>

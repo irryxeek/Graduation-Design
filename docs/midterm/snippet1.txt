@@ -1,0 +1,41 @@
+<w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ┌──────────────────┬──────────────────────────┬───────────────────────┐</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="70B30909">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 模块名称         │ 类型 / 操作               │ 输出维度              │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="3BD30234">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ├──────────────────┼──────────────────────────┼───────────────────────┤</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="13B45667">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 时间步嵌入       │ 正弦编码 → MLP(128→128)   │ (B, 128)              │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="33FC5F6B">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 条件编码器       │ Conv1d(1→64) → SiLU       │

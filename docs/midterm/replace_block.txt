@@ -1,0 +1,225 @@
+<w:p w14:paraId="2B206B0C">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ┌──────────────────┬──────────────────────────┬───────────────────────┐</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="70B30909">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 模块名称         │ 类型 / 操作               │ 输出维度              │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="3BD30234">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ├──────────────────┼──────────────────────────┼───────────────────────┤</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="13B45667">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 时间步嵌入       │ 正弦编码 → MLP(128→128)   │ (B, 128)              │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="33FC5F6B">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 条件编码器       │ Conv1d(1→64) → SiLU       │ (B, 64, 301)          │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="1D2DF6D1">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ├──────────────────┼──────────────────────────┼───────────────────────┤</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="7CA19416">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 编码器 Level-1   │ ResBlock(64→128)          │ (B, 128, 301)         │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="660D13CE">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │                  │ CrossAttention(128, 64)   │                       │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="7A3E1A13">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │                  │ MaxPool(2)                │ (B, 128, 150)         │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="2A184553">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ├──────────────────┼──────────────────────────┼───────────────────────┤</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="7A600553">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 编码器 Level-2   │ ResBlock(128→256)         │ (B, 256, 150)         │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="36FE1E70">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │                  │ CrossAttention(256, 64)   │                       │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="552F12F4">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │                  │ MaxPool(2)                │ (B, 256, 75)          │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="4FD25252">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ├──────────────────┼──────────────────────────┼───────────────────────┤</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="43D79E06">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 瓶颈层           │ ResBlock(256→256)         │ (B, 256, 75)          │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="1817CB64">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │                  │ CrossAttention(256, 64)   │                       │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="37A01A47">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ├──────────────────┼──────────────────────────┼───────────────────────┤</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="204660D8">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 解码器 Level-2   │ ConvTranspose(×2)         │ (B, 256, 150)         │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="44C5C6D8">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │                  │ Concat(Skip) → ResBlock   │ (B, 128, 150)         │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="6678AB87">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ├──────────────────┼──────────────────────────┼───────────────────────┤</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="685EA758">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 解码器 Level-1   │ ConvTranspose(×2)         │ (B, 128, 301)         │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="1A0B663F">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │                  │ Concat(Skip) → ResBlock   │ (B, 64, 301)          │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="185A40A4">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  ├──────────────────┼──────────────────────────┼───────────────────────┤</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="58E54C37">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  │ 输出层           │ Conv1d(64→2, k=1)         │ (B, 2, 301)           │</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="54F23886">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+        </w:rPr>
+        <w:t xml:space="preserve">  └──────────────────┴──────────────────────────┴───────────────────────┘</w:t>
+      </w:r>
+    </w:p>
