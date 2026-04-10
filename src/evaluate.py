@@ -44,8 +44,10 @@ def parse_args():
     parser.add_argument("--sampler", choices=["ddpm", "ddim"], default="ddim")
     parser.add_argument("--ddim_steps", type=int, default=50)
     parser.add_argument("--n_samples", type=int, default=50)
+    parser.add_argument("--batch_size", type=int, default=1,
+                        help="批量评估时的推理 batch size; 建议 GPU 下使用 16/32/64")
     parser.add_argument("--out_channels", type=int, default=1,
-                        help="输出通道数: 1=单变量, 3=多变量")
+                        help="输出通道数: 1=温度, 2=温度+气压, 3=温度+气压+湿度")
     parser.add_argument("--data_dir", type=str, default=PROCESSED_DIR)
     parser.add_argument("--save_dir", type=str, default=None)
     parser.add_argument("--seed", type=int, default=42)
@@ -130,60 +132,77 @@ def main():
     # 确定变量名
     if out_ch == 3:
         var_names = ["temperature", "pressure", "humidity"]
+    elif out_ch == 2:
+        var_names = ["temperature", "pressure"]
     else:
         var_names = ["temperature"]
 
     report = EvaluationReport(variable_names=var_names)
 
     # 4. 逐样本推理与评估
-    print(f"\n开始批量评估 ({args.sampler.upper()}, {len(indices)} 样本)...")
+    batch_size = max(1, args.batch_size)
+    print(f"\n开始批量评估 ({args.sampler.upper()}, {len(indices)} 样本, batch_size={batch_size})...")
     all_preds = []
     all_truths = []
 
-    for idx in tqdm(indices):
-        input_ba = raw_x[idx]
-        true_vals = raw_y[idx]  # (301,) 或 (num_vars, 301)
+    for start in tqdm(range(0, len(indices), batch_size)):
+        batch_indices = indices[start:start + batch_size]
+        input_ba = raw_x[batch_indices]
+        true_vals = raw_y[batch_indices]
 
         # 标准化
         input_norm = (input_ba - x_mean) / x_std
-        cond = torch.tensor(input_norm).float().unsqueeze(0).unsqueeze(0).to(DEVICE)
+        cond = torch.tensor(input_norm).float().unsqueeze(1).to(DEVICE)
 
         # 推理
         with torch.no_grad():
             if args.sampler == "ddim":
-                gen = ddim_sample(model, cond, shape=(1, out_ch, 301),
-                                  schedule=schedule, ddim_steps=args.ddim_steps)
+                gen = ddim_sample(
+                    model,
+                    cond,
+                    shape=(len(batch_indices), out_ch, 301),
+                    schedule=schedule,
+                    ddim_steps=args.ddim_steps,
+                )
             else:
-                gen = ddpm_sample(model, cond, shape=(1, out_ch, 301),
-                                  schedule=schedule)
+                gen = ddpm_sample(
+                    model,
+                    cond,
+                    shape=(len(batch_indices), out_ch, 301),
+                    schedule=schedule,
+                )
 
         # 反归一化
-        pred = gen.squeeze(0).cpu() * y_std.cpu() + y_mean.cpu()
-        pred = pred.numpy()  # (out_ch, 301) 或 (1, 301)
+        preds = gen.cpu() * y_std.cpu().unsqueeze(0) + y_mean.cpu().unsqueeze(0)
+        preds = preds.numpy()  # (B, out_ch, 301)
 
-        # 平滑
-        if pred.ndim == 1:
-            pred = savgol_filter(pred, SAVGOL_WINDOW, SAVGOL_POLYORDER)
-        else:
-            for i in range(pred.shape[0]):
-                try:
-                    pred[i] = savgol_filter(pred[i], SAVGOL_WINDOW, SAVGOL_POLYORDER)
-                except Exception:
-                    pass
+        # 平滑并写入报告
+        for local_idx, sample_idx in enumerate(batch_indices):
+            pred = preds[local_idx]
+            truth = true_vals[local_idx]
+            ba = input_ba[local_idx]
 
-        # 确保 true_vals 维度匹配
-        if true_vals.ndim == 1 and pred.ndim == 2:
-            true_vals = true_vals[np.newaxis, :]
+            if pred.ndim == 1:
+                pred = savgol_filter(pred, SAVGOL_WINDOW, SAVGOL_POLYORDER)
+            else:
+                for i in range(pred.shape[0]):
+                    try:
+                        pred[i] = savgol_filter(pred[i], SAVGOL_WINDOW, SAVGOL_POLYORDER)
+                    except Exception:
+                        pass
 
-        all_preds.append(pred)
-        all_truths.append(true_vals)
+            if truth.ndim == 1 and pred.ndim == 2:
+                truth = truth[np.newaxis, :]
 
-        report.add_sample(
-            pred=pred if pred.ndim > 1 else pred[np.newaxis, :],
-            truth=true_vals if true_vals.ndim > 1 else true_vals[np.newaxis, :],
-            sample_idx=int(idx),
-            input_ba=input_ba,
-        )
+            all_preds.append(pred)
+            all_truths.append(truth)
+
+            report.add_sample(
+                pred=pred if pred.ndim > 1 else pred[np.newaxis, :],
+                truth=truth if truth.ndim > 1 else truth[np.newaxis, :],
+                sample_idx=int(sample_idx),
+                input_ba=ba,
+            )
 
     # 5. 输出评估报告
     report.print_report()
