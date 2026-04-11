@@ -1,0 +1,50 @@
+{
+  "files": {
+    "demo_upload_atp_wap_2025_16.npz": "Upload this as input x; it also contains optional labels y for automatic metrics.",
+    "demo_upload_atp_wap_2025_16_x_only.npz": "Upload this to demonstrate prediction-only mode without labels."
+  },
+  "source_dataset": "Data/Processed_ATP_WAP_2025",
+  "source_split": "test",
+  "sample_indices": [
+    0,
+    42,
+    128,
+    256,
+    512,
+    768,
+    1024,
+    1536,
+    2048,
+    3072,
+    4096,
+    5120,
+    6144,
+    7168,
+    8192,
+    9000
+  ],
+  "x_shape": [
+    16,
+    301
+  ],
+  "y_shape": [
+    16,
+    3,
+    301
+  ],
+  "x_description": "Raw log10 bending angle profiles expected by upload mode, shape (N, 301).",
+  "y_description": "Raw denormalized T/P/Q labels, shape (N, 3, 301).",
+  "variables": [
+    "temperature_K",
+    "pressure_log10_hPa_or_processor_unit",
+    "humidity_g_per_kg"
+  ],
+  "stats_source_for_streamlit": "Data/Processed_ATP_WAP_2025/stats.npy",
+  "dataset_summary": {
+    "train": 44881,
+    "val": 9617,
+    "test": 9618,
+    "processed": 64116,
+    "paired": 69376
+  }
+}
