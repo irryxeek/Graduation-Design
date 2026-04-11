@@ -17,6 +17,7 @@
 import os
 import sys
 import argparse
+from datetime import datetime, timezone
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -206,7 +207,21 @@ def main():
 
     # 5. 输出评估报告
     report.print_report()
-    report.save_json(os.path.join(args.save_dir, "evaluation_report.json"))
+    report.save_json(
+        os.path.join(args.save_dir, "evaluation_report.json"),
+        metadata={
+            "sampler": args.sampler,
+            "ddim_steps": args.ddim_steps if args.sampler == "ddim" else None,
+            "batch_size": batch_size,
+            "model_path": os.path.relpath(args.model_path, PROJECT_ROOT),
+            "model_type": args.model_type,
+            "out_channels": out_ch,
+            "data_dir": os.path.relpath(args.data_dir, PROJECT_ROOT),
+            "device": str(DEVICE),
+            "evaluated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "seed": args.seed,
+        },
+    )
 
     # 6. 绘图
     heights = np.linspace(0, 60, 301)

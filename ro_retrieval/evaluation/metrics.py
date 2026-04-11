@@ -230,12 +230,14 @@ class EvaluationReport:
 
         print("\n" + "=" * 60)
 
-    def save_json(self, filepath):
+    def save_json(self, filepath, metadata=None):
         """保存评估结果到 JSON"""
         output = {
             "summary": self.summary(),
             "n_samples": len(self.results),
         }
+        if metadata is not None:
+            output["metadata"] = metadata
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(output, f, indent=2, ensure_ascii=False)
         print(f"评估报告已保存: {filepath}")
