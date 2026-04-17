@@ -62,3 +62,19 @@ Thumbs.db
 Data/
 draft/
 sample_data.tar.gz
+
+# 文档处理工作区与本地日志
+docs/*/workspace/unpacked/
+docs/*/workspace/tmp/
+utils/logs/
+download_run_*.log
+download_run_*.err.log
+utils/*.status.log
+utils/*.failed.txt
+utils/*.completed.txt
+utils/*.pending.txt
+utils/*.out.log
+utils/*.err.log
+utils/wget-log
+.claude/tmp_*.txt
+.claude/reference_*.txt
