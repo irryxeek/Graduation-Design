@@ -14,14 +14,37 @@
       "Bash(pandoc --track-changes=all \"docs/midterm/中期 - v2.0_fixed.docx\" -o /tmp/midterm_text.md)",
       "Read(//tmp/**)",
       "Read(//d/tmp/**)",
-      "Bash(xxd)"
+      "Bash(xxd)",
+      "Bash(npm --version)",
+      "Bash(npm install:*)",
+      "Bash(codex --version)",
+      "Bash(npm show:*)",
+      "Read(//c/Users/sense/AppData/Roaming/npm/node_modules/@openai/codex/**)",
+      "Bash(cmd.exe /c \"codex --version\")",
+      "Bash(cmd.exe /c \"codex --version && echo OK\")",
+      "Bash(cmd.exe /c \"where codex\")",
+      "Read(//c/Users/sense/AppData/Roaming/npm//**)",
+      "Read(//c/Users/sense/AppData/Roaming/npm/node_modules/@openai//**)",
+      "Bash(/c/Users/sense/AppData/Roaming/npm/codex --version)",
+      "Read(//c/Users/sense/AppData/Roaming/npm/**)",
+      "Bash(node /c/Users/sense/AppData/Roaming/npm/node_modules/@openai/codex/bin/codex.js --version)",
+      "Bash(npm list:*)",
+      "Bash(node \"C:/Users/sense/AppData/Roaming/npm/node_modules/@openai/codex/bin/codex.js\" --version)",
+      "Bash(cmd.exe /c \"if not exist %USERPROFILE%\\\\.codex mkdir %USERPROFILE%\\\\.codex && type %USERPROFILE%\\\\.codex\\\\config.toml 2>nul\")",
+      "Bash(ping -n 3 baidu.com)",
+      "Bash(ping -n 3 google.com)",
+      "Bash(ping -n 3 github.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{time_total}s\" https://www.baidu.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{time_total}s\" https://github.com)",
+      "Bash(nslookup baidu.com)"
     ],
     "additionalDirectories": [
       "/Users/placebo/.ssh",
       "/Users/placebo/Projects/Graduation-Design/docs/midterm",
       "c:\\Users\\sense\\.claude\\skills\\academic-writing",
       "\\tmp",
-      "d:\\tmp"
+      "d:\\tmp",
+      "C:\\Users\\sense\\.codex"
     ]
   }
 }

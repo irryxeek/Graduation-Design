@@ -1,0 +1,73 @@
+# Thesis Figure Prompt: Data Processing Pipeline
+
+Create a publication-quality scientific flowchart for a master's thesis.
+
+Topic:
++ GNSS-RO atmospheric profile retrieval data processing pipeline
++ FY-3D GNOS ATP + WAP paired dataset construction
+
+Document type:
++ thesis
+
+Layout requirements:
++ Use a clean left-to-right pipeline layout.
++ Divide the figure into three horizontal sections:
+  1. Input data
+  2. Processing pipeline
+  3. Output artifacts
++ Keep the composition balanced, spacious, and easy to read at thesis page width.
++ Use rounded rectangles, thin clean outlines, consistent arrow styles, and a white background.
+
+Content requirements:
+
+1. Input data section
++ Box 1: "ATP raw files"
+  Subtitle: "bending angle / impact parameter / qc flag"
++ Box 2: "WAP raw files"
+  Subtitle: "temperature / pressure / humidity / altitude"
+
+2. Processing pipeline section
++ Step 1: "File matching"
+  Subtitle: "pair ATP and WAP files by occultation event filename"
++ Step 2: "Variable extraction"
+  Subtitle: "read bending angle, impact parameter, temperature, pressure, humidity, height"
++ Step 3: "Quality control"
+  Subtitle: "keep qc = 100 and valid physical ranges only"
++ Step 4: "Height-grid interpolation"
+  Subtitle: "linearly interpolate all variables to 0-60 km with 301 levels"
++ Step 5: "Nonlinear transform"
+  Subtitle: "log10(bending angle), log10(pressure), clip humidity to nonnegative"
++ Step 6: "Z-score normalization"
+  Subtitle: "use training-set mean and std only"
++ Step 7: "Dataset split"
+  Subtitle: "train / validation / test = 70% / 15% / 15%"
+
+3. Output artifacts section
++ Box 1: "Standardized arrays"
+  Subtitle: "train_x.npy, train_y.npy, val_x.npy, val_y.npy, test_x.npy, test_y.npy"
++ Box 2: "Metadata and statistics"
+  Subtitle: "summary.json, split_meta.json, norm_params.npz"
+
+Visual style:
++ Scientific, minimal, publication-ready, vector-like appearance.
++ Use colorblind-friendly colors.
++ Suggest a subtle semantic palette:
+  - blue for inputs
+  - gray or slate for generic processing
+  - green for key data-cleaning or transformation stages
+  - amber for outputs
++ Use modern sans-serif typography.
++ Keep labels short and legible.
++ No decorative icons, no 3D effects, no screenshots, no clutter.
++ Emphasize clarity over visual novelty.
+
+Optional annotation:
++ Add a small note below the pipeline:
+  "FY-3D GNOS ATP+WAP paired dataset, January-June 2025, 64,116 valid samples"
+
+Rendering preference:
++ If text rendering quality is strong, use concise simplified Chinese labels.
++ If text rendering quality is uncertain, prefer clean English labels for the boxes to preserve figure readability.
+
+Goal:
++ The final figure should look suitable for inclusion in a thesis chapter describing the end-to-end data preprocessing workflow before model training.
