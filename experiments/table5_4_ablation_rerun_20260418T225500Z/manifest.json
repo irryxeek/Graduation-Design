@@ -1,0 +1,63 @@
+{
+  "task": "paper_table_5_4_ablation_rerun",
+  "created_at_utc": "2026-04-18T14:53:14.332610+00:00",
+  "data_dir": "/root/autodl-tmp/Graduation-Design/Data/Processed_ATP_WAP_2025",
+  "epochs": 50,
+  "batch_size": 64,
+  "lr": 0.0001,
+  "patience": 15,
+  "monitor_target": "humidity",
+  "seed": 42,
+  "experiments": [
+    {
+      "name": "equal_no_constraint",
+      "label": "等权无约束",
+      "var_weights": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "humidity_grad_weight": 0.0
+    },
+    {
+      "name": "weighted_no_constraint",
+      "label": "加权无约束",
+      "var_weights": [
+        1.0,
+        1.0,
+        4.0
+      ],
+      "humidity_grad_weight": 0.0
+    },
+    {
+      "name": "weighted_with_grad",
+      "label": "加权+梯度约束（最终）",
+      "var_weights": [
+        1.0,
+        1.0,
+        4.0
+      ],
+      "humidity_grad_weight": 0.05
+    }
+  ],
+  "paper_targets": {
+    "equal_no_constraint": {
+      "temperature_cc": 0.7856,
+      "pressure_cc": 0.9992,
+      "humidity_cc": 0.6104,
+      "humidity_rmse": 0.8712
+    },
+    "weighted_no_constraint": {
+      "temperature_cc": 0.7831,
+      "pressure_cc": 0.999,
+      "humidity_cc": 0.6783,
+      "humidity_rmse": 0.8156
+    },
+    "weighted_with_grad": {
+      "temperature_cc": 0.782,
+      "pressure_cc": 0.999,
+      "humidity_cc": 0.696,
+      "humidity_rmse": 0.7996
+    }
+  }
+}

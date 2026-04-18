@@ -2,8 +2,11 @@
 RO-Retrieval: 基于条件扩散模型的掩星大气廓线反演系统
 =======================================================
 
+当前主线:
+    FY-3D GNOS L2 ATP 弯曲角 -> FY-3D GNOS L2 WAP 温度/气压/湿度
+
 模块结构:
-    - ro_retrieval.data       : 数据处理、质量控制、ERA5时空匹配
+    - ro_retrieval.data       : 数据处理、ATP/WAP 配对、质量控制
     - ro_retrieval.model      : 条件扩散模型 (U-Net + 交叉注意力)
     - ro_retrieval.training   : 系统化训练器 (验证 + Early Stopping)
     - ro_retrieval.evaluation : 评估指标 (RMSE / Bias / CC)

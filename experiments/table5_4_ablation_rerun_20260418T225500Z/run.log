@@ -1,0 +1,567 @@
+
+========================================================================================
+开始实验: 等权无约束 (equal_no_constraint)
+weights=[1.0, 1.0, 1.0], humidity_grad_weight=0.0, monitor_target=humidity
+========================================================================================
+[Trainer] 检测到 val_x.npy / val_y.npy, 使用预划分验证集
+[Trainer] 训练集: 44881, 验证集: 9617
+[Trainer] 模型: enhanced, 参数量: 1,115,651
+[Trainer] 输出通道: 3
+
+============================================================
+开始训练
+  设备     : cuda
+  Epochs   : 50
+  Batch    : 64
+  LR       : 0.0001
+  模式     : multi (3 channels)
+  模型     : enhanced
+  Patience : 15
+============================================================
+
+Epoch   1/50  train_loss=0.080694  val_loss=0.030379  monitor(humidity)=0.023154  best_monitor=N/A
+  [Val per-var] temperature=0.043795  pressure=0.024189  humidity=0.023154  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.023154)
+Epoch   2/50  train_loss=0.026034  val_loss=0.027907  monitor(humidity)=0.021922  best_monitor=0.023154
+  [Val per-var] temperature=0.038415  pressure=0.023383  humidity=0.021922  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.021922)
+Epoch   3/50  train_loss=0.022865  val_loss=0.022068  monitor(humidity)=0.016565  best_monitor=0.021922
+  [Val per-var] temperature=0.033959  pressure=0.015680  humidity=0.016565  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.016565)
+Epoch   4/50  train_loss=0.020763  val_loss=0.020749  monitor(humidity)=0.015546  best_monitor=0.016565
+  [Val per-var] temperature=0.032370  pressure=0.014332  humidity=0.015546  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.015546)
+Epoch   5/50  train_loss=0.019964  val_loss=0.019974  monitor(humidity)=0.015728  best_monitor=0.015546
+  [Val per-var] temperature=0.030891  pressure=0.013303  humidity=0.015728  q_cc=0.000000
+Epoch   6/50  train_loss=0.018790  val_loss=0.018015  monitor(humidity)=0.013185  best_monitor=0.015546
+  [Val per-var] temperature=0.028922  pressure=0.011940  humidity=0.013185  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.013185)
+Epoch   7/50  train_loss=0.017951  val_loss=0.018273  monitor(humidity)=0.013812  best_monitor=0.013185
+  [Val per-var] temperature=0.028811  pressure=0.012197  humidity=0.013812  q_cc=0.000000
+Epoch   8/50  train_loss=0.017335  val_loss=0.017229  monitor(humidity)=0.012466  best_monitor=0.013185
+  [Val per-var] temperature=0.028179  pressure=0.011041  humidity=0.012466  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.012466)
+Epoch   9/50  train_loss=0.016748  val_loss=0.016881  monitor(humidity)=0.012765  best_monitor=0.012466
+  [Val per-var] temperature=0.026984  pressure=0.010894  humidity=0.012765  q_cc=0.000000
+Epoch  10/50  train_loss=0.016482  val_loss=0.017154  monitor(humidity)=0.012693  best_monitor=0.012466
+  [Val per-var] temperature=0.028019  pressure=0.010749  humidity=0.012693  q_cc=0.000000
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_epoch_10.pth
+Epoch  11/50  train_loss=0.016129  val_loss=0.016576  monitor(humidity)=0.012479  best_monitor=0.012466
+  [Val per-var] temperature=0.026403  pressure=0.010847  humidity=0.012479  q_cc=0.000000
+Epoch  12/50  train_loss=0.015844  val_loss=0.015616  monitor(humidity)=0.012309  best_monitor=0.012466
+  [Val per-var] temperature=0.025061  pressure=0.009479  humidity=0.012309  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.012309)
+Epoch  13/50  train_loss=0.015666  val_loss=0.015971  monitor(humidity)=0.013094  best_monitor=0.012309
+  [Val per-var] temperature=0.025615  pressure=0.009204  humidity=0.013094  q_cc=0.000000
+Epoch  14/50  train_loss=0.015252  val_loss=0.014966  monitor(humidity)=0.010976  best_monitor=0.012309
+  [Val per-var] temperature=0.024958  pressure=0.008964  humidity=0.010976  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010976)
+Epoch  15/50  train_loss=0.014915  val_loss=0.014592  monitor(humidity)=0.010946  best_monitor=0.010976
+  [Val per-var] temperature=0.024517  pressure=0.008312  humidity=0.010946  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010946)
+Epoch  16/50  train_loss=0.014871  val_loss=0.015534  monitor(humidity)=0.011998  best_monitor=0.010946
+  [Val per-var] temperature=0.025278  pressure=0.009325  humidity=0.011998  q_cc=0.000000
+Epoch  17/50  train_loss=0.014434  val_loss=0.014511  monitor(humidity)=0.011042  best_monitor=0.010946
+  [Val per-var] temperature=0.023577  pressure=0.008913  humidity=0.011042  q_cc=0.000000
+Epoch  18/50  train_loss=0.014385  val_loss=0.014409  monitor(humidity)=0.010687  best_monitor=0.010946
+  [Val per-var] temperature=0.024541  pressure=0.008000  humidity=0.010687  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010687)
+Epoch  19/50  train_loss=0.014154  val_loss=0.014272  monitor(humidity)=0.010927  best_monitor=0.010687
+  [Val per-var] temperature=0.024122  pressure=0.007765  humidity=0.010927  q_cc=0.000000
+Epoch  20/50  train_loss=0.014012  val_loss=0.014007  monitor(humidity)=0.010516  best_monitor=0.010687
+  [Val per-var] temperature=0.023478  pressure=0.008025  humidity=0.010516  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010516)
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_epoch_20.pth
+Epoch  21/50  train_loss=0.013982  val_loss=0.014068  monitor(humidity)=0.010870  best_monitor=0.010516
+  [Val per-var] temperature=0.023872  pressure=0.007462  humidity=0.010870  q_cc=0.000000
+Epoch  22/50  train_loss=0.013985  val_loss=0.014209  monitor(humidity)=0.011021  best_monitor=0.010516
+  [Val per-var] temperature=0.023648  pressure=0.007959  humidity=0.011021  q_cc=0.000000
+Epoch  23/50  train_loss=0.013738  val_loss=0.013942  monitor(humidity)=0.010871  best_monitor=0.010516
+  [Val per-var] temperature=0.023442  pressure=0.007514  humidity=0.010871  q_cc=0.000000
+Epoch  24/50  train_loss=0.013641  val_loss=0.013731  monitor(humidity)=0.010746  best_monitor=0.010516
+  [Val per-var] temperature=0.022739  pressure=0.007709  humidity=0.010746  q_cc=0.000000
+Epoch  25/50  train_loss=0.013467  val_loss=0.013456  monitor(humidity)=0.010585  best_monitor=0.010516
+  [Val per-var] temperature=0.022320  pressure=0.007462  humidity=0.010585  q_cc=0.000000
+Epoch  26/50  train_loss=0.013561  val_loss=0.013296  monitor(humidity)=0.010376  best_monitor=0.010516
+  [Val per-var] temperature=0.022468  pressure=0.007044  humidity=0.010376  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010376)
+Epoch  27/50  train_loss=0.013175  val_loss=0.013602  monitor(humidity)=0.010543  best_monitor=0.010376
+  [Val per-var] temperature=0.022718  pressure=0.007545  humidity=0.010543  q_cc=0.000000
+Epoch  28/50  train_loss=0.013221  val_loss=0.013440  monitor(humidity)=0.010458  best_monitor=0.010376
+  [Val per-var] temperature=0.022963  pressure=0.006899  humidity=0.010458  q_cc=0.000000
+Epoch  29/50  train_loss=0.013071  val_loss=0.013410  monitor(humidity)=0.010591  best_monitor=0.010376
+  [Val per-var] temperature=0.022764  pressure=0.006875  humidity=0.010591  q_cc=0.000000
+Epoch  30/50  train_loss=0.013031  val_loss=0.012800  monitor(humidity)=0.009875  best_monitor=0.010376
+  [Val per-var] temperature=0.021422  pressure=0.007101  humidity=0.009875  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009875)
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_epoch_30.pth
+Epoch  31/50  train_loss=0.013048  val_loss=0.012724  monitor(humidity)=0.010091  best_monitor=0.009875
+  [Val per-var] temperature=0.021458  pressure=0.006624  humidity=0.010091  q_cc=0.000000
+Epoch  32/50  train_loss=0.013021  val_loss=0.012841  monitor(humidity)=0.010105  best_monitor=0.009875
+  [Val per-var] temperature=0.021798  pressure=0.006620  humidity=0.010105  q_cc=0.000000
+Epoch  33/50  train_loss=0.013026  val_loss=0.012894  monitor(humidity)=0.009991  best_monitor=0.009875
+  [Val per-var] temperature=0.022179  pressure=0.006513  humidity=0.009991  q_cc=0.000000
+Epoch  34/50  train_loss=0.012705  val_loss=0.012743  monitor(humidity)=0.009820  best_monitor=0.009875
+  [Val per-var] temperature=0.021901  pressure=0.006507  humidity=0.009820  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009820)
+Epoch  35/50  train_loss=0.012699  val_loss=0.012511  monitor(humidity)=0.009931  best_monitor=0.009820
+  [Val per-var] temperature=0.021365  pressure=0.006236  humidity=0.009931  q_cc=0.000000
+Epoch  36/50  train_loss=0.012622  val_loss=0.012635  monitor(humidity)=0.010204  best_monitor=0.009820
+  [Val per-var] temperature=0.021594  pressure=0.006108  humidity=0.010204  q_cc=0.000000
+Epoch  37/50  train_loss=0.012675  val_loss=0.012713  monitor(humidity)=0.009976  best_monitor=0.009820
+  [Val per-var] temperature=0.021585  pressure=0.006578  humidity=0.009976  q_cc=0.000000
+Epoch  38/50  train_loss=0.012433  val_loss=0.012608  monitor(humidity)=0.010108  best_monitor=0.009820
+  [Val per-var] temperature=0.021522  pressure=0.006194  humidity=0.010108  q_cc=0.000000
+Epoch  39/50  train_loss=0.012541  val_loss=0.012564  monitor(humidity)=0.010179  best_monitor=0.009820
+  [Val per-var] temperature=0.021309  pressure=0.006205  humidity=0.010179  q_cc=0.000000
+Epoch  40/50  train_loss=0.012389  val_loss=0.012869  monitor(humidity)=0.010170  best_monitor=0.009820
+  [Val per-var] temperature=0.021399  pressure=0.007038  humidity=0.010170  q_cc=0.000000
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_epoch_40.pth
+Epoch  41/50  train_loss=0.012482  val_loss=0.012698  monitor(humidity)=0.009896  best_monitor=0.009820
+  [Val per-var] temperature=0.021957  pressure=0.006241  humidity=0.009896  q_cc=0.000000
+Epoch  42/50  train_loss=0.012256  val_loss=0.013005  monitor(humidity)=0.011058  best_monitor=0.009820
+  [Val per-var] temperature=0.021898  pressure=0.006060  humidity=0.011058  q_cc=0.000000
+Epoch  43/50  train_loss=0.012131  val_loss=0.012480  monitor(humidity)=0.009782  best_monitor=0.009820
+  [Val per-var] temperature=0.021874  pressure=0.005784  humidity=0.009782  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009782)
+Epoch  44/50  train_loss=0.012220  val_loss=0.012117  monitor(humidity)=0.010018  best_monitor=0.009782
+  [Val per-var] temperature=0.020703  pressure=0.005631  humidity=0.010018  q_cc=0.000000
+Epoch  45/50  train_loss=0.012220  val_loss=0.012076  monitor(humidity)=0.009521  best_monitor=0.009782
+  [Val per-var] temperature=0.020897  pressure=0.005808  humidity=0.009521  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009521)
+Epoch  46/50  train_loss=0.012171  val_loss=0.011852  monitor(humidity)=0.009435  best_monitor=0.009521
+  [Val per-var] temperature=0.020593  pressure=0.005526  humidity=0.009435  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009435)
+Epoch  47/50  train_loss=0.012070  val_loss=0.012374  monitor(humidity)=0.009753  best_monitor=0.009435
+  [Val per-var] temperature=0.021186  pressure=0.006182  humidity=0.009753  q_cc=0.000000
+Epoch  48/50  train_loss=0.011914  val_loss=0.012215  monitor(humidity)=0.009808  best_monitor=0.009435
+  [Val per-var] temperature=0.021011  pressure=0.005826  humidity=0.009808  q_cc=0.000000
+Epoch  49/50  train_loss=0.011990  val_loss=0.012053  monitor(humidity)=0.009580  best_monitor=0.009435
+  [Val per-var] temperature=0.020978  pressure=0.005601  humidity=0.009580  q_cc=0.000000
+Epoch  50/50  train_loss=0.012143  val_loss=0.012366  monitor(humidity)=0.009711  best_monitor=0.009435
+  [Val per-var] temperature=0.020913  pressure=0.006475  humidity=0.009711  q_cc=0.000000
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_epoch_50.pth
+
+训练完成! 耗时: 24.6 分钟
+最佳验证损失: 0.011852
+最佳监控指标(humidity): 0.009435
+训练日志已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_training_log.json
+使用测试集进行评估
+评估数据: X=(9618, 301), Y=(9618, 3, 301)
+模型加载成功: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth
+
+开始批量评估 (DDPM, 9618 样本, batch_size=64, metric_space=standardized)...
+
+============================================================
+           综合评估报告 (Evaluation Report)
+============================================================
+
+  [TEMPERATURE]  (N=9618)
+    RMSE  : 1.4648 ± 6.3112 K
+            (best=0.2247, worst=207.6810)
+    Bias  : -0.7580 ± 6.2629 K
+    CC    : 0.6933 (min=-0.8458, max=0.9858)
+
+  [PRESSURE]  (N=9618)
+    RMSE  : 0.0843 ± 0.0896 hPa
+            (best=0.0160, worst=3.0016)
+    Bias  : -0.0261 ± 0.0918 hPa
+    CC    : 0.9991 (min=0.9802, max=1.0000)
+
+  [HUMIDITY]  (N=9618)
+    RMSE  : 0.8626 ± 0.9474 kg/kg
+            (best=0.0623, worst=17.6367)
+    Bias  : -0.0047 ± 0.4847 kg/kg
+    CC    : 0.8233 (min=-0.8838, max=0.9989)
+
+============================================================
+评估报告已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/eval_ddpm_fulltest/evaluation_report.json
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/eval_ddpm_fulltest/temperature_comparison.png
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/eval_ddpm_fulltest/pressure_comparison.png
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/eval_ddpm_fulltest/humidity_comparison.png
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/eval_ddpm_fulltest/rmse_bias_profile.png
+
+评估完成! 结果保存在: experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/eval_ddpm_fulltest
+
+========================================================================================
+开始实验: 加权无约束 (weighted_no_constraint)
+weights=[1.0, 1.0, 4.0], humidity_grad_weight=0.0, monitor_target=humidity
+========================================================================================
+[Trainer] 检测到 val_x.npy / val_y.npy, 使用预划分验证集
+[Trainer] 训练集: 44881, 验证集: 9617
+[Trainer] 模型: enhanced, 参数量: 1,115,651
+[Trainer] 输出通道: 3
+
+============================================================
+开始训练
+  设备     : cuda
+  Epochs   : 50
+  Batch    : 64
+  LR       : 0.0001
+  模式     : multi (3 channels)
+  模型     : enhanced
+  Patience : 15
+============================================================
+
+Epoch   1/50  train_loss=0.145749  val_loss=0.049847  monitor(humidity)=0.019412  best_monitor=N/A
+  [Val per-var] temperature=0.042802  pressure=0.029090  humidity=0.019412  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.019412)
+Epoch   2/50  train_loss=0.044118  val_loss=0.048864  monitor(humidity)=0.020481  best_monitor=0.019412
+  [Val per-var] temperature=0.039789  pressure=0.024877  humidity=0.020481  q_cc=0.000000
+Epoch   3/50  train_loss=0.038579  val_loss=0.038024  monitor(humidity)=0.013818  best_monitor=0.019412
+  [Val per-var] temperature=0.036529  pressure=0.022271  humidity=0.013818  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.013818)
+Epoch   4/50  train_loss=0.035116  val_loss=0.035816  monitor(humidity)=0.013424  best_monitor=0.013818
+  [Val per-var] temperature=0.036193  pressure=0.017562  humidity=0.013424  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.013424)
+Epoch   5/50  train_loss=0.033503  val_loss=0.034612  monitor(humidity)=0.013761  best_monitor=0.013424
+  [Val per-var] temperature=0.032690  pressure=0.016099  humidity=0.013761  q_cc=0.000000
+Epoch   6/50  train_loss=0.031792  val_loss=0.031058  monitor(humidity)=0.011644  best_monitor=0.013424
+  [Val per-var] temperature=0.032442  pressure=0.014154  humidity=0.011644  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.011644)
+Epoch   7/50  train_loss=0.030357  val_loss=0.030120  monitor(humidity)=0.011738  best_monitor=0.011644
+  [Val per-var] temperature=0.029951  pressure=0.013456  humidity=0.011738  q_cc=0.000000
+Epoch   8/50  train_loss=0.029545  val_loss=0.029556  monitor(humidity)=0.011326  best_monitor=0.011644
+  [Val per-var] temperature=0.030190  pressure=0.013173  humidity=0.011326  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.011326)
+Epoch   9/50  train_loss=0.028706  val_loss=0.028221  monitor(humidity)=0.010920  best_monitor=0.011326
+  [Val per-var] temperature=0.028339  pressure=0.012645  humidity=0.010920  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010920)
+Epoch  10/50  train_loss=0.028060  val_loss=0.029456  monitor(humidity)=0.011372  best_monitor=0.010920
+  [Val per-var] temperature=0.030052  pressure=0.012827  humidity=0.011372  q_cc=0.000000
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_epoch_10.pth
+Epoch  11/50  train_loss=0.027683  val_loss=0.027720  monitor(humidity)=0.010841  best_monitor=0.010920
+  [Val per-var] temperature=0.028139  pressure=0.011655  humidity=0.010841  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010841)
+Epoch  12/50  train_loss=0.027403  val_loss=0.026664  monitor(humidity)=0.010745  best_monitor=0.010841
+  [Val per-var] temperature=0.026186  pressure=0.010827  humidity=0.010745  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010745)
+Epoch  13/50  train_loss=0.027155  val_loss=0.029483  monitor(humidity)=0.012296  best_monitor=0.010745
+  [Val per-var] temperature=0.027678  pressure=0.011587  humidity=0.012296  q_cc=0.000000
+Epoch  14/50  train_loss=0.026320  val_loss=0.025702  monitor(humidity)=0.010201  best_monitor=0.010745
+  [Val per-var] temperature=0.026513  pressure=0.009787  humidity=0.010201  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010201)
+Epoch  15/50  train_loss=0.026003  val_loss=0.025562  monitor(humidity)=0.010157  best_monitor=0.010201
+  [Val per-var] temperature=0.026270  pressure=0.009790  humidity=0.010157  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010157)
+Epoch  16/50  train_loss=0.025888  val_loss=0.026239  monitor(humidity)=0.010796  best_monitor=0.010157
+  [Val per-var] temperature=0.025801  pressure=0.009734  humidity=0.010796  q_cc=0.000000
+Epoch  17/50  train_loss=0.025150  val_loss=0.025107  monitor(humidity)=0.010221  best_monitor=0.010157
+  [Val per-var] temperature=0.024678  pressure=0.009758  humidity=0.010221  q_cc=0.000000
+Epoch  18/50  train_loss=0.025241  val_loss=0.025013  monitor(humidity)=0.009982  best_monitor=0.010157
+  [Val per-var] temperature=0.025608  pressure=0.009501  humidity=0.009982  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009982)
+Epoch  19/50  train_loss=0.024765  val_loss=0.025351  monitor(humidity)=0.010183  best_monitor=0.009982
+  [Val per-var] temperature=0.025922  pressure=0.009396  humidity=0.010183  q_cc=0.000000
+Epoch  20/50  train_loss=0.024629  val_loss=0.024394  monitor(humidity)=0.009728  best_monitor=0.009982
+  [Val per-var] temperature=0.025138  pressure=0.009131  humidity=0.009728  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009728)
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_epoch_20.pth
+Epoch  21/50  train_loss=0.024631  val_loss=0.024581  monitor(humidity)=0.010126  best_monitor=0.009728
+  [Val per-var] temperature=0.024544  pressure=0.008694  humidity=0.010126  q_cc=0.000000
+Epoch  22/50  train_loss=0.024807  val_loss=0.025376  monitor(humidity)=0.010416  best_monitor=0.009728
+  [Val per-var] temperature=0.024950  pressure=0.009513  humidity=0.010416  q_cc=0.000000
+Epoch  23/50  train_loss=0.024186  val_loss=0.024877  monitor(humidity)=0.010310  best_monitor=0.009728
+  [Val per-var] temperature=0.024817  pressure=0.008575  humidity=0.010310  q_cc=0.000000
+Epoch  24/50  train_loss=0.024142  val_loss=0.024237  monitor(humidity)=0.010032  best_monitor=0.009728
+  [Val per-var] temperature=0.023835  pressure=0.008749  humidity=0.010032  q_cc=0.000000
+Epoch  25/50  train_loss=0.023973  val_loss=0.024032  monitor(humidity)=0.010001  best_monitor=0.009728
+  [Val per-var] temperature=0.023385  pressure=0.008706  humidity=0.010001  q_cc=0.000000
+Epoch  26/50  train_loss=0.024054  val_loss=0.023481  monitor(humidity)=0.009719  best_monitor=0.009728
+  [Val per-var] temperature=0.023460  pressure=0.008107  humidity=0.009719  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009719)
+Epoch  27/50  train_loss=0.023476  val_loss=0.023423  monitor(humidity)=0.009628  best_monitor=0.009719
+  [Val per-var] temperature=0.023539  pressure=0.008217  humidity=0.009628  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009628)
+Epoch  28/50  train_loss=0.023612  val_loss=0.024057  monitor(humidity)=0.009912  best_monitor=0.009628
+  [Val per-var] temperature=0.024047  pressure=0.008473  humidity=0.009912  q_cc=0.000000
+Epoch  29/50  train_loss=0.023255  val_loss=0.023880  monitor(humidity)=0.010005  best_monitor=0.009628
+  [Val per-var] temperature=0.023648  pressure=0.007975  humidity=0.010005  q_cc=0.000000
+Epoch  30/50  train_loss=0.023234  val_loss=0.023110  monitor(humidity)=0.009494  best_monitor=0.009628
+  [Val per-var] temperature=0.022686  pressure=0.008669  humidity=0.009494  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009494)
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_epoch_30.pth
+Epoch  31/50  train_loss=0.023334  val_loss=0.022716  monitor(humidity)=0.009496  best_monitor=0.009494
+  [Val per-var] temperature=0.022490  pressure=0.007674  humidity=0.009496  q_cc=0.000000
+Epoch  32/50  train_loss=0.023247  val_loss=0.022898  monitor(humidity)=0.009550  best_monitor=0.009494
+  [Val per-var] temperature=0.022906  pressure=0.007590  humidity=0.009550  q_cc=0.000000
+Epoch  33/50  train_loss=0.023327  val_loss=0.023131  monitor(humidity)=0.009572  best_monitor=0.009494
+  [Val per-var] temperature=0.023374  pressure=0.007732  humidity=0.009572  q_cc=0.000000
+Epoch  34/50  train_loss=0.022757  val_loss=0.022702  monitor(humidity)=0.009436  best_monitor=0.009494
+  [Val per-var] temperature=0.022924  pressure=0.007438  humidity=0.009436  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009436)
+Epoch  35/50  train_loss=0.022855  val_loss=0.022744  monitor(humidity)=0.009512  best_monitor=0.009436
+  [Val per-var] temperature=0.022208  pressure=0.007975  humidity=0.009512  q_cc=0.000000
+Epoch  36/50  train_loss=0.022674  val_loss=0.022585  monitor(humidity)=0.009470  best_monitor=0.009436
+  [Val per-var] temperature=0.022685  pressure=0.007192  humidity=0.009470  q_cc=0.000000
+Epoch  37/50  train_loss=0.022799  val_loss=0.022654  monitor(humidity)=0.009416  best_monitor=0.009436
+  [Val per-var] temperature=0.022918  pressure=0.007382  humidity=0.009416  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009416)
+Epoch  38/50  train_loss=0.022334  val_loss=0.022390  monitor(humidity)=0.009353  best_monitor=0.009416
+  [Val per-var] temperature=0.022659  pressure=0.007103  humidity=0.009353  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009353)
+Epoch  39/50  train_loss=0.022469  val_loss=0.022641  monitor(humidity)=0.009531  best_monitor=0.009353
+  [Val per-var] temperature=0.022434  pressure=0.007365  humidity=0.009531  q_cc=0.000000
+Epoch  40/50  train_loss=0.022269  val_loss=0.022734  monitor(humidity)=0.009404  best_monitor=0.009353
+  [Val per-var] temperature=0.022515  pressure=0.008070  humidity=0.009404  q_cc=0.000000
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_epoch_40.pth
+Epoch  41/50  train_loss=0.022414  val_loss=0.022271  monitor(humidity)=0.009285  best_monitor=0.009353
+  [Val per-var] temperature=0.022483  pressure=0.007192  humidity=0.009285  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009285)
+Epoch  42/50  train_loss=0.022082  val_loss=0.024195  monitor(humidity)=0.010406  best_monitor=0.009285
+  [Val per-var] temperature=0.023289  pressure=0.007674  humidity=0.010406  q_cc=0.000000
+Epoch  43/50  train_loss=0.021830  val_loss=0.022121  monitor(humidity)=0.009295  best_monitor=0.009285
+  [Val per-var] temperature=0.022430  pressure=0.006755  humidity=0.009295  q_cc=0.000000
+Epoch  44/50  train_loss=0.021982  val_loss=0.022009  monitor(humidity)=0.009371  best_monitor=0.009285
+  [Val per-var] temperature=0.021726  pressure=0.006818  humidity=0.009371  q_cc=0.000000
+Epoch  45/50  train_loss=0.022046  val_loss=0.021632  monitor(humidity)=0.009000  best_monitor=0.009285
+  [Val per-var] temperature=0.022023  pressure=0.006870  humidity=0.009000  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009000)
+Epoch  46/50  train_loss=0.021859  val_loss=0.021353  monitor(humidity)=0.008925  best_monitor=0.009000
+  [Val per-var] temperature=0.021584  pressure=0.006777  humidity=0.008925  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth (monitor=humidity:0.008925)
+Epoch  47/50  train_loss=0.021698  val_loss=0.022074  monitor(humidity)=0.009220  best_monitor=0.008925
+  [Val per-var] temperature=0.022342  pressure=0.007000  humidity=0.009220  q_cc=0.000000
+Epoch  48/50  train_loss=0.021400  val_loss=0.021613  monitor(humidity)=0.009118  best_monitor=0.008925
+  [Val per-var] temperature=0.021660  pressure=0.006706  humidity=0.009118  q_cc=0.000000
+Epoch  49/50  train_loss=0.021547  val_loss=0.021524  monitor(humidity)=0.009048  best_monitor=0.008925
+  [Val per-var] temperature=0.021890  pressure=0.006491  humidity=0.009048  q_cc=0.000000
+Epoch  50/50  train_loss=0.021871  val_loss=0.021969  monitor(humidity)=0.009212  best_monitor=0.008925
+  [Val per-var] temperature=0.022324  pressure=0.006733  humidity=0.009212  q_cc=0.000000
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_epoch_50.pth
+
+训练完成! 耗时: 24.6 分钟
+最佳验证损失: 0.021353
+最佳监控指标(humidity): 0.008925
+训练日志已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_training_log.json
+使用测试集进行评估
+评估数据: X=(9618, 301), Y=(9618, 3, 301)
+模型加载成功: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth
+
+开始批量评估 (DDPM, 9618 样本, batch_size=64, metric_space=standardized)...
+
+============================================================
+           综合评估报告 (Evaluation Report)
+============================================================
+
+  [TEMPERATURE]  (N=9618)
+    RMSE  : 1.1793 ± 3.9104 K
+            (best=0.1715, worst=134.0865)
+    Bias  : -0.5668 ± 3.9140 K
+    CC    : 0.7017 (min=-0.8507, max=0.9872)
+
+  [PRESSURE]  (N=9618)
+    RMSE  : 0.0831 ± 0.0814 hPa
+            (best=0.0188, worst=2.7990)
+    Bias  : -0.0275 ± 0.0848 hPa
+    CC    : 0.9992 (min=0.9921, max=1.0000)
+
+  [HUMIDITY]  (N=9618)
+    RMSE  : 0.8091 ± 0.9739 kg/kg
+            (best=0.0504, worst=18.2605)
+    Bias  : -0.0111 ± 0.4723 kg/kg
+    CC    : 0.8362 (min=-0.3023, max=0.9987)
+
+============================================================
+评估报告已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/eval_ddpm_fulltest/evaluation_report.json
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/eval_ddpm_fulltest/temperature_comparison.png
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/eval_ddpm_fulltest/pressure_comparison.png
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/eval_ddpm_fulltest/humidity_comparison.png
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/eval_ddpm_fulltest/rmse_bias_profile.png
+
+评估完成! 结果保存在: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/eval_ddpm_fulltest
+
+========================================================================================
+开始实验: 加权+梯度约束（最终） (weighted_with_grad)
+weights=[1.0, 1.0, 4.0], humidity_grad_weight=0.05, monitor_target=humidity
+========================================================================================
+[Trainer] 检测到 val_x.npy / val_y.npy, 使用预划分验证集
+[Trainer] 训练集: 44881, 验证集: 9617
+[Trainer] 模型: enhanced, 参数量: 1,115,651
+[Trainer] 输出通道: 3
+
+============================================================
+开始训练
+  设备     : cuda
+  Epochs   : 50
+  Batch    : 64
+  LR       : 0.0001
+  模式     : multi (3 channels)
+  模型     : enhanced
+  Patience : 15
+============================================================
+
+Epoch   1/50  train_loss=2.727033  val_loss=0.122393  monitor(humidity)=0.029326  best_monitor=N/A
+  [Val per-var] temperature=0.078386  pressure=0.065397  humidity=0.029326  q_grad=0.707269  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.029326)
+Epoch   2/50  train_loss=0.084353  val_loss=0.067757  monitor(humidity)=0.021197  best_monitor=0.029326
+  [Val per-var] temperature=0.049641  pressure=0.036171  humidity=0.021197  q_grad=0.217805  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.021197)
+Epoch   3/50  train_loss=0.057452  val_loss=0.061578  monitor(humidity)=0.021512  best_monitor=0.021197
+  [Val per-var] temperature=0.045277  pressure=0.026657  humidity=0.021512  q_grad=0.178345  q_cc=0.000000
+Epoch   4/50  train_loss=0.048233  val_loss=0.057017  monitor(humidity)=0.015164  best_monitor=0.021197
+  [Val per-var] temperature=0.037980  pressure=0.022059  humidity=0.015164  q_grad=0.335702  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.015164)
+Epoch   5/50  train_loss=0.044445  val_loss=0.041102  monitor(humidity)=0.015264  best_monitor=0.015164
+  [Val per-var] temperature=0.036579  pressure=0.018933  humidity=0.015264  q_grad=0.044929  q_cc=0.000000
+Epoch   6/50  train_loss=0.039740  val_loss=0.036024  monitor(humidity)=0.012571  best_monitor=0.015164
+  [Val per-var] temperature=0.033214  pressure=0.017741  humidity=0.012571  q_grad=0.045541  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.012571)
+Epoch   7/50  train_loss=0.036818  val_loss=0.034325  monitor(humidity)=0.011915  best_monitor=0.012571
+  [Val per-var] temperature=0.031935  pressure=0.015723  humidity=0.011915  q_grad=0.051074  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.011915)
+Epoch   8/50  train_loss=0.035115  val_loss=0.034143  monitor(humidity)=0.012051  best_monitor=0.011915
+  [Val per-var] temperature=0.031840  pressure=0.015515  humidity=0.012051  q_grad=0.045788  q_cc=0.000000
+Epoch   9/50  train_loss=0.033202  val_loss=0.034769  monitor(humidity)=0.011628  best_monitor=0.011915
+  [Val per-var] temperature=0.031115  pressure=0.015196  humidity=0.011628  q_grad=0.076566  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.011628)
+Epoch  10/50  train_loss=0.032214  val_loss=0.033257  monitor(humidity)=0.011945  best_monitor=0.011628
+  [Val per-var] temperature=0.030825  pressure=0.015402  humidity=0.011945  q_grad=0.038419  q_cc=0.000000
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_epoch_10.pth
+Epoch  11/50  train_loss=0.031237  val_loss=0.030525  monitor(humidity)=0.011446  best_monitor=0.011628
+  [Val per-var] temperature=0.029157  pressure=0.012947  humidity=0.011446  q_grad=0.024603  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.011446)
+Epoch  12/50  train_loss=0.030890  val_loss=0.031424  monitor(humidity)=0.012621  best_monitor=0.011446
+  [Val per-var] temperature=0.027785  pressure=0.012351  humidity=0.012621  q_grad=0.024352  q_cc=0.000000
+Epoch  13/50  train_loss=0.030913  val_loss=0.034553  monitor(humidity)=0.011756  best_monitor=0.011446
+  [Val per-var] temperature=0.028794  pressure=0.012741  humidity=0.011756  q_grad=0.100661  q_cc=0.000000
+Epoch  14/50  train_loss=0.029640  val_loss=0.030439  monitor(humidity)=0.010364  best_monitor=0.011446
+  [Val per-var] temperature=0.027635  pressure=0.010908  humidity=0.010364  q_grad=0.075460  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010364)
+Epoch  15/50  train_loss=0.028804  val_loss=0.029175  monitor(humidity)=0.010472  best_monitor=0.010364
+  [Val per-var] temperature=0.027369  pressure=0.012953  humidity=0.010472  q_grad=0.035445  q_cc=0.000000
+Epoch  16/50  train_loss=0.028360  val_loss=0.028425  monitor(humidity)=0.010812  best_monitor=0.010364
+  [Val per-var] temperature=0.026972  pressure=0.011073  humidity=0.010812  q_grad=0.026533  q_cc=0.000000
+Epoch  17/50  train_loss=0.027710  val_loss=0.028275  monitor(humidity)=0.010934  best_monitor=0.010364
+  [Val per-var] temperature=0.026515  pressure=0.010712  humidity=0.010934  q_grad=0.025741  q_cc=0.000000
+Epoch  18/50  train_loss=0.027572  val_loss=0.026669  monitor(humidity)=0.010263  best_monitor=0.010364
+  [Val per-var] temperature=0.026559  pressure=0.009962  humidity=0.010263  q_grad=0.016225  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010263)
+Epoch  19/50  train_loss=0.026922  val_loss=0.029242  monitor(humidity)=0.010980  best_monitor=0.010263
+  [Val per-var] temperature=0.027004  pressure=0.010126  humidity=0.010980  q_grad=0.044498  q_cc=0.000000
+Epoch  20/50  train_loss=0.026684  val_loss=0.026025  monitor(humidity)=0.010015  best_monitor=0.010263
+  [Val per-var] temperature=0.025886  pressure=0.010232  humidity=0.010015  q_grad=0.012660  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.010015)
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_epoch_20.pth
+Epoch  21/50  train_loss=0.026741  val_loss=0.027071  monitor(humidity)=0.010690  best_monitor=0.010015
+  [Val per-var] temperature=0.025573  pressure=0.009620  humidity=0.010690  q_grad=0.021727  q_cc=0.000000
+Epoch  22/50  train_loss=0.027026  val_loss=0.027742  monitor(humidity)=0.010883  best_monitor=0.010015
+  [Val per-var] temperature=0.025658  pressure=0.009574  humidity=0.010883  q_grad=0.029755  q_cc=0.000000
+Epoch  23/50  train_loss=0.026122  val_loss=0.026181  monitor(humidity)=0.010501  best_monitor=0.010015
+  [Val per-var] temperature=0.025695  pressure=0.009204  humidity=0.010501  q_grad=0.010945  q_cc=0.000000
+Epoch  24/50  train_loss=0.025903  val_loss=0.025578  monitor(humidity)=0.010252  best_monitor=0.010015
+  [Val per-var] temperature=0.024640  pressure=0.009153  humidity=0.010252  q_grad=0.012888  q_cc=0.000000
+Epoch  25/50  train_loss=0.025676  val_loss=0.025247  monitor(humidity)=0.010143  best_monitor=0.010015
+  [Val per-var] temperature=0.024667  pressure=0.009195  humidity=0.010143  q_grad=0.008724  q_cc=0.000000
+Epoch  26/50  train_loss=0.025742  val_loss=0.024325  monitor(humidity)=0.009761  best_monitor=0.010015
+  [Val per-var] temperature=0.023873  pressure=0.008512  humidity=0.009761  q_grad=0.010305  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009761)
+Epoch  27/50  train_loss=0.025150  val_loss=0.025576  monitor(humidity)=0.009972  best_monitor=0.009761
+  [Val per-var] temperature=0.024627  pressure=0.009105  humidity=0.009972  q_grad=0.020718  q_cc=0.000000
+Epoch  28/50  train_loss=0.025166  val_loss=0.025850  monitor(humidity)=0.010394  best_monitor=0.009761
+  [Val per-var] temperature=0.024546  pressure=0.008855  humidity=0.010394  q_grad=0.017136  q_cc=0.000000
+Epoch  29/50  train_loss=0.024922  val_loss=0.024612  monitor(humidity)=0.009850  best_monitor=0.009761
+  [Val per-var] temperature=0.024143  pressure=0.008710  humidity=0.009850  q_grad=0.010537  q_cc=0.000000
+Epoch  30/50  train_loss=0.024790  val_loss=0.025516  monitor(humidity)=0.009564  best_monitor=0.009761
+  [Val per-var] temperature=0.024590  pressure=0.008398  humidity=0.009564  q_grad=0.035345  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009564)
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_epoch_30.pth
+Epoch  31/50  train_loss=0.024738  val_loss=0.024817  monitor(humidity)=0.009789  best_monitor=0.009564
+  [Val per-var] temperature=0.023276  pressure=0.009078  humidity=0.009789  q_grad=0.019586  q_cc=0.000000
+Epoch  32/50  train_loss=0.024733  val_loss=0.024303  monitor(humidity)=0.009825  best_monitor=0.009564
+  [Val per-var] temperature=0.023836  pressure=0.007966  humidity=0.009825  q_grad=0.012039  q_cc=0.000000
+Epoch  33/50  train_loss=0.024806  val_loss=0.024211  monitor(humidity)=0.009730  best_monitor=0.009564
+  [Val per-var] temperature=0.023825  pressure=0.008290  humidity=0.009730  q_grad=0.010655  q_cc=0.000000
+Epoch  34/50  train_loss=0.024079  val_loss=0.023649  monitor(humidity)=0.009601  best_monitor=0.009564
+  [Val per-var] temperature=0.023724  pressure=0.007714  humidity=0.009601  q_grad=0.007375  q_cc=0.000000
+Epoch  35/50  train_loss=0.024151  val_loss=0.023389  monitor(humidity)=0.009350  best_monitor=0.009564
+  [Val per-var] temperature=0.023634  pressure=0.007637  humidity=0.009350  q_grad=0.009995  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009350)
+Epoch  36/50  train_loss=0.024015  val_loss=0.024439  monitor(humidity)=0.009692  best_monitor=0.009350
+  [Val per-var] temperature=0.023253  pressure=0.007741  humidity=0.009692  q_grad=0.023710  q_cc=0.000000
+Epoch  37/50  train_loss=0.024115  val_loss=0.023971  monitor(humidity)=0.009805  best_monitor=0.009350
+  [Val per-var] temperature=0.023528  pressure=0.007755  humidity=0.009805  q_grad=0.009399  q_cc=0.000000
+Epoch  38/50  train_loss=0.023697  val_loss=0.024135  monitor(humidity)=0.009626  best_monitor=0.009350
+  [Val per-var] temperature=0.023516  pressure=0.007531  humidity=0.009626  q_grad=0.019034  q_cc=0.000000
+Epoch  39/50  train_loss=0.023836  val_loss=0.023380  monitor(humidity)=0.009656  best_monitor=0.009350
+  [Val per-var] temperature=0.022825  pressure=0.007454  humidity=0.009656  q_grad=0.008239  q_cc=0.000000
+Epoch  40/50  train_loss=0.023516  val_loss=0.024091  monitor(humidity)=0.009634  best_monitor=0.009350
+  [Val per-var] temperature=0.023785  pressure=0.008784  humidity=0.009634  q_grad=0.007782  q_cc=0.000000
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_epoch_40.pth
+Epoch  41/50  train_loss=0.023708  val_loss=0.023144  monitor(humidity)=0.009423  best_monitor=0.009350
+  [Val per-var] temperature=0.022977  pressure=0.007285  humidity=0.009423  q_grad=0.009848  q_cc=0.000000
+Epoch  42/50  train_loss=0.023262  val_loss=0.024790  monitor(humidity)=0.010430  best_monitor=0.009350
+  [Val per-var] temperature=0.023859  pressure=0.007540  humidity=0.010430  q_grad=0.008341  q_cc=0.000000
+Epoch  43/50  train_loss=0.023176  val_loss=0.023518  monitor(humidity)=0.009384  best_monitor=0.009350
+  [Val per-var] temperature=0.022956  pressure=0.007447  humidity=0.009384  q_grad=0.017443  q_cc=0.000000
+Epoch  44/50  train_loss=0.023345  val_loss=0.023046  monitor(humidity)=0.009559  best_monitor=0.009350
+  [Val per-var] temperature=0.022277  pressure=0.007292  humidity=0.009559  q_grad=0.008899  q_cc=0.000000
+Epoch  45/50  train_loss=0.023240  val_loss=0.023207  monitor(humidity)=0.009245  best_monitor=0.009350
+  [Val per-var] temperature=0.023380  pressure=0.007607  humidity=0.009245  q_grad=0.011027  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009245)
+Epoch  46/50  train_loss=0.023220  val_loss=0.022624  monitor(humidity)=0.009322  best_monitor=0.009245
+  [Val per-var] temperature=0.022223  pressure=0.006963  humidity=0.009322  q_grad=0.009309  q_cc=0.000000
+Epoch  47/50  train_loss=0.022927  val_loss=0.023376  monitor(humidity)=0.009641  best_monitor=0.009245
+  [Val per-var] temperature=0.022594  pressure=0.007786  humidity=0.009641  q_grad=0.007879  q_cc=0.000000
+Epoch  48/50  train_loss=0.022534  val_loss=0.023283  monitor(humidity)=0.009313  best_monitor=0.009245
+  [Val per-var] temperature=0.022805  pressure=0.006967  humidity=0.009313  q_grad=0.018852  q_cc=0.000000
+Epoch  49/50  train_loss=0.022722  val_loss=0.022297  monitor(humidity)=0.009188  best_monitor=0.009245
+  [Val per-var] temperature=0.022372  pressure=0.006934  humidity=0.009188  q_grad=0.005559  q_cc=0.000000
+  [BEST] 最佳模型已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth (monitor=humidity:0.009188)
+Epoch  50/50  train_loss=0.023129  val_loss=0.024133  monitor(humidity)=0.009364  best_monitor=0.009188
+  [Val per-var] temperature=0.022651  pressure=0.007261  humidity=0.009364  q_grad=0.033545  q_cc=0.000000
+  检查点已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_epoch_50.pth
+
+训练完成! 耗时: 24.0 分钟
+最佳验证损失: 0.022297
+最佳监控指标(humidity): 0.009188
+训练日志已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_training_log.json
+使用测试集进行评估
+评估数据: X=(9618, 301), Y=(9618, 3, 301)
+模型加载成功: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth
+
+开始批量评估 (DDPM, 9618 样本, batch_size=64, metric_space=standardized)...
+
+============================================================
+           综合评估报告 (Evaluation Report)
+============================================================
+
+  [TEMPERATURE]  (N=9618)
+    RMSE  : 0.9178 ± 1.6230 K
+            (best=0.1623, worst=83.9379)
+    Bias  : -0.3924 ± 1.6633 K
+    CC    : 0.7280 (min=-0.8552, max=0.9936)
+
+  [PRESSURE]  (N=9618)
+    RMSE  : 0.0853 ± 0.0787 hPa
+            (best=0.0192, worst=4.2653)
+    Bias  : -0.0239 ± 0.0832 hPa
+    CC    : 0.9991 (min=0.9893, max=1.0000)
+
+  [HUMIDITY]  (N=9618)
+    RMSE  : 0.8595 ± 1.1234 kg/kg
+            (best=0.0503, worst=12.9723)
+    Bias  : -0.0202 ± 0.4202 kg/kg
+    CC    : 0.8378 (min=-0.7135, max=0.9984)
+
+============================================================
+评估报告已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/eval_ddpm_fulltest/evaluation_report.json
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/eval_ddpm_fulltest/temperature_comparison.png
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/eval_ddpm_fulltest/pressure_comparison.png
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/eval_ddpm_fulltest/humidity_comparison.png
+已保存: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/eval_ddpm_fulltest/rmse_bias_profile.png
+
+评估完成! 结果保存在: experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/eval_ddpm_fulltest
+
+########################################################################################
+# 表 5-4 消融实验补跑结果
+
+| 配置 | 变量权重 | 梯度约束 | 温度 CC | 气压 CC | 湿度 CC | 湿度 RMSE | 论文湿度 CC | 论文湿度 RMSE |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 等权无约束 | [1.0, 1.0, 1.0] | 0.00 | 0.6933 | 0.9991 | 0.8233 | 0.8626 | 0.6104 | 0.8712 |
+| 加权无约束 | [1.0, 1.0, 4.0] | 0.00 | 0.7017 | 0.9992 | 0.8362 | 0.8091 | 0.6783 | 0.8156 |
+| 加权+梯度约束（最终） | [1.0, 1.0, 4.0] | 0.05 | 0.7280 | 0.9991 | 0.8378 | 0.8595 | 0.6960 | 0.7996 |
+
+########################################################################################
+
+全部结果已写入: experiments/table5_4_ablation_rerun_20260418T225500Z

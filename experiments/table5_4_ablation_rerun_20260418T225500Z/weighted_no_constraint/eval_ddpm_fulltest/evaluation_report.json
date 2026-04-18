@@ -1,0 +1,55 @@
+{
+  "summary": {
+    "temperature": {
+      "count": 9618,
+      "rmse_mean": 1.1793104029988941,
+      "rmse_std": 3.9103874207821194,
+      "rmse_min": 0.17145614326000214,
+      "rmse_max": 134.08645629882812,
+      "bias_mean": -0.5668073441711707,
+      "bias_std": 3.9139857844030583,
+      "cc_mean": 0.7016506813144539,
+      "cc_min": -0.8507174135607133,
+      "cc_max": 0.9872218307920873
+    },
+    "pressure": {
+      "count": 9618,
+      "rmse_mean": 0.08313113731291648,
+      "rmse_std": 0.08136234048941333,
+      "rmse_min": 0.018794983625411987,
+      "rmse_max": 2.799004077911377,
+      "bias_mean": -0.027507736992526895,
+      "bias_std": 0.08478332422959316,
+      "cc_mean": 0.9992111785981562,
+      "cc_min": 0.9920682411689948,
+      "cc_max": 0.9999700384365433
+    },
+    "humidity": {
+      "count": 9618,
+      "rmse_mean": 0.8090727722369495,
+      "rmse_std": 0.9738568326668506,
+      "rmse_min": 0.05040524899959564,
+      "rmse_max": 18.260478973388672,
+      "bias_mean": -0.011071238350191618,
+      "bias_std": 0.4722655285395735,
+      "cc_mean": 0.8361703217231214,
+      "cc_min": -0.30226521988779814,
+      "cc_max": 0.9987362258361357
+    }
+  },
+  "n_samples": 9618,
+  "metadata": {
+    "sampler": "ddpm",
+    "ddim_steps": null,
+    "batch_size": 64,
+    "model_path": "experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth",
+    "model_type": "enhanced",
+    "out_channels": 3,
+    "data_dir": "Data/Processed_ATP_WAP_2025",
+    "metric_space": "standardized",
+    "smooth": true,
+    "device": "cuda",
+    "evaluated_at_utc": "2026-04-18T16:19:24.095137+00:00",
+    "seed": 42
+  }
+}

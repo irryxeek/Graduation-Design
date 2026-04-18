@@ -1,4 +1,4 @@
-"""训练模型 - 使用损失函数加权改进温度预测"""
+"""历史脚本: Q1 阶段加权训练实验, 非当前论文主线默认入口。"""
 import sys
 sys.path.append('/root/autodl-tmp/Graduation-Design')
 

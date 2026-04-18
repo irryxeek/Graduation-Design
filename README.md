@@ -1,278 +1,182 @@
-# GNSS-RO 大气剖面反演系统
+# 基于掩星数据的气象要素反演系统
 
-基于 **条件扩散模型**（Conditional Diffusion Model）的 GNSS 无线电掩星（Radio Occultation）大气剖面反演系统。
+基于条件扩散模型的 GNSS 掩星一维大气廓线反演项目。当前仓库主线与论文一致，重点场景为：
 
----
+- 输入：FY-3D GNOS L2 ATP 弯曲角廓线
+- 标签：FY-3D GNOS L2 WAP 温度 / 气压 / 湿度廓线
+- 模型：`EnhancedConditionalUNet1D` + DDPM / DDIM
+- 任务：三变量联合反演
 
-## 项目概述
+## 当前主线
 
-利用 COSMIC-2 弯曲角观测数据作为输入条件，通过条件扩散模型生成大气温度 / 气压 / 湿度剖面，以 ERA5 再分析数据和 CDAAC wetPf2 产品作为训练真值。
+论文与当前实验主线使用 2025 年 1 月到 6 月 FY-3D ATP+WAP 配对数据。
 
-### 核心特性
+- 原始 WAP 文件：74,334
+- 成功配对 ATP：69,376
+- 有效样本：64,116
+- 数据划分：train 44,881 / val 9,617 / test 9,618
+- 默认处理后数据目录：`Data/Processed_ATP_WAP_2025`
 
-| 特性 | 说明 |
-|------|------|
-| 条件扩散模型 | DDPM（1000 步）+ DDIM（50 步加速采样） |
-| 增强版 U-Net | 交叉注意力机制 + 残差块 + 正弦时间嵌入 |
-| 多变量输出 | 温度 + 气压 + 湿度三通道同时反演 |
-| ERA5 时空匹配 | 根据掩星观测的经纬度/时间自动匹配 ERA5 格点 |
-| 多级质量控制 | 穿透高度 / 有效点数 / 物理范围 / 递减率 / 单调性 |
-| 系统化训练 | 验证集监控 + Early Stopping + 训练日志 |
-| 完整评估 | RMSE / Bias / CC · 逐高度层分析 · JSON 报告 |
-| 交互式前端 | Streamlit 可视化应用 |
+代表性实验目录：
 
----
+- `experiments/atp_wap_2025_hw4_hmon_g005`
+- `experiments/atp_wap_2025_hw4_hmon_g005_eval_fulltest`
+- `experiments/atp_wap_2025_hw4_hmon_g005_ddim50_eval_fulltest`
 
-## 项目结构
+## 仓库结构
 
-```
+```text
 .
-├── ro_retrieval/              # 核心 Python 包
-│   ├── __init__.py            # 包入口, 版本号
-│   ├── config.py              # 全局配置 (路径·超参数·设备)
-│   ├── data/                  # 数据处理子包
-│   ├── model/                 # 模型子包 (U-Net + 扩散调度)
-│   ├── training/              # 训练子包
-│   ├── evaluation/            # 评估子包
-│   ├── inference/             # 推理子包
-│   └── app/                   # Streamlit 交互式应用
-│
-├── src/                       # 入口脚本
-│   ├── process_data.py        # 数据预处理入口
-│   ├── train.py               # 训练入口
-│   ├── evaluate.py            # 批量评估入口
-│   ├── run_pipeline.py        # 端到端闭环流水线
-│   └── legacy/                # 早期独立脚本 (已归档)
-│
-├── utils/                     # 辅助工具
-│   ├── download_normal.sh     # FY-3D GNOS 数据批量下载脚本
-│   ├── visualize.py
-│   └── down/                  # FY-3D GNOS L1 数据 (2025-01, ~30k 文件)
-│
-├── Data/                      # 数据目录 (gitignore)
-│   ├── Sample/                # 原始数据样本
-│   └── Processed/             # 预处理后的标准化数据
-│
-├── checkpoints/               # 模型权重 (gitignore)
-├── outputs/                   # 输出目录 (gitignore)
-│   ├── logs/                  # 训练日志
-│   ├── figures/               # 图片输出
-│   └── evaluation/            # 评估结果
-│
-├── docs/                      # 项目文档
-│   ├── proposal/              # 开题相关
-│   ├── midterm/               # 中期相关
-│   └── defense/               # 答辩相关
-│
-└── requirements.txt           # Python 依赖
+├── ro_retrieval/              核心包
+│   ├── data/                  数据处理
+│   ├── model/                 U-Net 与扩散调度
+│   ├── training/              训练器
+│   ├── evaluation/            指标与报告
+│   ├── inference/             推理接口
+│   └── app/                   Streamlit 前端
+├── src/                       主入口脚本
+├── Data/                      原始数据与处理后数据
+├── experiments/               训练与评估产物
+├── docs/thesis/               论文草稿、图件、正式 PDF
+└── utils/                     下载、分块处理、文档辅助脚本
 ```
 
----
+## 关键入口
 
-## 快速开始
-
-### 1. 安装依赖
+### 1. ATP+WAP 数据预处理
 
 ```bash
-pip install -r requirements.txt
+python src/process_data.py \
+  --source fy3d_atp_wap \
+  --atp_dir Data/FY-3/ATP_WAP_2025_RAW/ATP \
+  --wap_dir Data/FY-3/ATP_WAP_2025_RAW/WAP \
+  --output_dir Data/Processed_ATP_WAP_2025 \
+  --qc-threshold 100
 ```
 
-### 2. 数据预处理
+### 2. 按论文配置训练
 
 ```bash
-# 使用 wetPf2 作为标签 (默认)
-python src/process_data.py
-
-# 使用 ERA5 作为标签
-python src/process_data.py --mode era5
-
-# 关闭严格 QC / 关闭数据划分
-python src/process_data.py --no-strict-qc --no-split
+python src/train.py \
+  --mode multi \
+  --model enhanced \
+  --data_dir Data/Processed_ATP_WAP_2025 \
+  --epochs 50 \
+  --batch_size 64 \
+  --patience 15 \
+  --var_weights 1,1,4 \
+  --monitor_target humidity \
+  --humidity_grad_weight 0.05
 ```
 
-### 3. 训练模型
+### 3. 按论文口径评估
+
+默认在标准化空间统计指标；`n_samples=0` 表示评估全部测试集样本。
+当前默认会沿用论文主实验的 Savitzky-Golay 平滑口径；如需关闭，可追加 `--no_smooth`。
 
 ```bash
-# 单变量 (温度) + 原始 U-Net
-python src/train.py --mode single --model legacy --epochs 100
-
-# 多变量 (温/压/湿) + 增强版 U-Net (推荐)
-python src/train.py --mode multi --model enhanced --epochs 100 --patience 20
+python src/evaluate.py \
+  --model_path experiments/atp_wap_2025_hw4_hmon_g005/enhanced_ro_diffusion_best.pth \
+  --model_type enhanced \
+  --data_dir Data/Processed_ATP_WAP_2025 \
+  --out_channels 3 \
+  --sampler ddim \
+  --ddim_steps 50 \
+  --n_samples 0 \
+  --batch_size 64 \
+  --metric_space standardized
 ```
 
-### 4. 批量评估
+如需物理空间指标：
 
 ```bash
-# DDIM 快速评估
-python src/evaluate.py --sampler ddim --n_samples 50
-
-# 指定模型权重
-python src/evaluate.py --model_path enhanced_ro_diffusion_best.pth --model_type enhanced --out_channels 3
+python src/evaluate.py ... --metric_space physical
 ```
 
-### 5. 端到端流水线 (一键运行)
+### 4. 一键流水线
 
 ```bash
-# 全部阶段: 数据处理 → 训练 → 评估
 python src/run_pipeline.py --all
-
-# 仅训练 + 评估
-python src/run_pipeline.py --train --evaluate
-
-# 指定参数
-python src/run_pipeline.py --all --model_type enhanced --var_mode multi --epochs 50
 ```
 
-### 6. 启动交互式界面
+默认行为：
+
+- 数据源：`fy3d_atp_wap`
+- 训练模式：`multi`
+- 模型：`enhanced`
+- 变量权重：`[1, 1, 4]`
+- 监控目标：`humidity`
+- 湿度梯度约束：`0.05`
+- 评估空间：`standardized`
+
+### 5. 启动前端
 
 ```bash
 streamlit run ro_retrieval/app/streamlit_app.py
 ```
 
-### 7. 消融实验
+前端优先发现以下数据集：
+
+- `Processed_ATP_WAP_2025`
+- `Processed_ATP_WAP`
+- `Processed_ATP_Q1`
+
+并支持上传 `.npy` / `.npz` / `.csv` 做批量推理与指标汇总。
+
+## 当前代表性结果
+
+全测试集 DDPM 结果：
+
+| 变量 | RMSE | Bias | CC |
+|------|-----:|-----:|---:|
+| 温度 | 0.6267 | 0.0105 | 0.7820 |
+| 气压 | 0.0756 | 0.0099 | 0.9990 |
+| 湿度 | 0.7996 | 0.0808 | 0.6960 |
+
+对应目录：
+
+- `experiments/atp_wap_2025_hw4_hmon_g005_eval_fulltest`
+
+全测试集 DDIM 50 步结果：
+
+| 变量 | RMSE | Bias | CC |
+|------|-----:|-----:|---:|
+| 温度 | 0.6261 | 0.0103 | 0.7820 |
+| 气压 | 0.0756 | 0.0099 | 0.9990 |
+| 湿度 | 0.7974 | 0.0793 | 0.6967 |
+
+对应目录：
+
+- `experiments/atp_wap_2025_hw4_hmon_g005_ddim50_eval_fulltest`
+
+## 工程规范
+
+仓库已补充最小化工程规范约定，见：
+
+- `docs/engineering/工程规范说明.md`
+
+推荐只将以下内容视为默认主线：
+
+- 核心包：`ro_retrieval/`
+- 命令行入口：`src/process_data.py`、`src/train.py`、`src/evaluate.py`、`src/run_pipeline.py`
+- 论文主线实验：`experiments/atp_wap_2025_hw4_hmon_g005*`
+
+`src/legacy/` 和其他历史脚本保留用于回溯，不建议继续作为默认入口。
+
+## 快速自检
+
+仓库根目录提供 `Makefile`，可用于执行最基础的工程自检和常用命令：
 
 ```bash
-# 对比 legacy vs enhanced 模型
-python src/ablation_study.py --epochs 50 --patience 15
-
-# 指定输出目录
-python src/ablation_study.py --output_dir outputs/ablation
+make test
+make eval-paper
+make app
 ```
 
-### 8. CDAAC 产品对比
+其中 `make test` 会运行轻量级单元测试，主要覆盖统计量兼容和主线参数解析等基础逻辑。
 
-```bash
-# 与 CDAAC wetPf2 官方产品对比
-python src/compare_cdaac.py
+## 说明
 
-# 使用模型预测结果对比
-python src/compare_cdaac.py --model_pred outputs/model_predictions.npy
-```
-
----
-
-## 模型架构
-
-### 条件扩散模型 (DDPM)
-
-- **前向过程**: 逐步向大气剖面添加高斯噪声（$T=1000$ 步）
-- **反向过程**: 以弯曲角剖面为条件，U-Net 预测噪声并迭代去噪
-- **DDIM 加速**: 确定性跳步采样，50 步即可生成高质量剖面
-
-### 增强版 U-Net (`EnhancedConditionalUNet1D`)
-
-```
-输入: x_t (噪声剖面) + t (时间步) + condition (弯曲角)
-  ↓
-正弦时间嵌入 (SinusoidalTimeEmbedding)
-  ↓
-编码器: ResBlock1D × 2 + CrossAttention1D × 2 + MaxPool
-  ↓
-瓶颈层: ResBlock1D + CrossAttention1D
-  ↓
-解码器: ConvTranspose + Skip Connection + ResBlock1D × 2
-  ↓
-输出: 预测噪声 ε (channels = 1 或 3)
-```
-
-### 原始 U-Net (`ConditionalUNet1D`)
-
-保留用于兼容早期训练的 `.pth` 权重，结构更简单（无注意力 / 无残差块）。
-
----
-
-## 数据流水线
-
-```
-COSMIC atmPrf (弯曲角)          COSMIC wetPf2 (温/压/湿) 或 ERA5
-       │                                    │
-       ▼                                    ▼
-  QC: 有效点数 / 穿透高度          QC: 温度范围 / 气压单调性
-       │                           / 湿度非负 / 递减率
-       ▼                                    ▼
-  插值到标准高度网格              插值到标准高度网格
-  (0–60 km, 301 点)              (0–60 km, 301 点)
-       │                                    │
-       ▼                                    ▼
-  log10(|BA| + ε) → x_vec       [T, P, q] stack → y_vec (3, 301)
-       │                                    │
-       └──────────── 配对 ──────────────────┘
-                     │
-                     ▼
-            Z-Score 标准化
-                     │
-                     ▼
-        train / val / test (70 / 15 / 15)
-```
-
----
-
-## 评估指标
-
-| 指标 | 公式 | 说明 |
-|------|------|------|
-| RMSE | $\sqrt{\frac{1}{n}\sum(y_{pred}-y_{true})^2}$ | 均方根误差 |
-| Bias | $\frac{1}{n}\sum(y_{pred}-y_{true})$ | 系统偏差 |
-| CC   | $\text{corr}(y_{pred},\, y_{true})$ | 相关系数 |
-| MAE  | $\frac{1}{n}\sum|y_{pred}-y_{true}|$ | 平均绝对误差 |
-
----
-
-## 训练结果
-
-### 最新训练 (2026-03-01)
-
-| 项目 | 详情 |
-|------|------|
-| 模型 | EnhancedConditionalUNet1D (多变量, 3 通道) |
-| 参数量 | 1,115,651 |
-| 数据源 | COSMIC-2 atmPrf (Day 001) |
-| 样本数 | 1,830 (QC 通过率 55.3%) |
-| 划分 | train 1,281 / val 274 / test 275 |
-| 最优 val_loss | **0.013806** (Epoch 64) |
-| 早停轮次 | Epoch 84 (patience=20) |
-| 训练时长 | ~0.8 分钟 (GPU) |
-| 权重文件 | `enhanced_ro_diffusion_best.pth` (4.3 MB) |
-
-<details>
-<summary>训练损失曲线摘要</summary>
-
-- Epoch 1: train_loss=1.091, val_loss=0.658
-- Epoch 10: train_loss=0.050, val_loss=0.038
-- Epoch 20: train_loss=0.032, val_loss=0.030
-- Epoch 40: train_loss=0.025, val_loss=0.024
-- Epoch 64: train_loss=0.020, val_loss=**0.014** (best)
-- Epoch 84: train_loss=0.018, val_loss=0.018 (early stop)
-
-</details>
-
-### 数据统计 (标准化前)
-
-| 变量 | 均值 | 标准差 | 备注 |
-|------|------|--------|------|
-| 弯曲角 (输入) | log10 变换后 Z-Score | — | 301 高度层 |
-| 温度 | 237.6 K | 27.9 K | 正常范围 |
-| 气压 | 132.4 hPa | 241.7 hPa | 正常范围 |
-| 湿度 | 0 | 0 | 全零 (无 wetPf2 数据) |
-
----
-
-## 数据来源
-
-- **COSMIC-2**: [CDAAC](https://data.cosmic.ucar.edu/) — `atmPrf` (弯曲角) + `wetPf2` (温/压/湿)
-- **FY-3D GNOS**: [NSMC](https://satellite.nsmc.org.cn/) — L1 级掩星观测数据 (已下载 2025 年 1 月整月，30,794 个文件，~20 GB，存储于 `utils/down/`)
-- **ERA5**: [ECMWF](https://cds.climate.copernicus.eu/) — 37 层气压面再分析数据 (温度 / 比湿 / 位势高度)
-
----
-
-## 依赖
-
-- Python ≥ 3.9
-- PyTorch ≥ 2.0
-- NumPy, SciPy, Matplotlib, xarray, netCDF4, tqdm, Streamlit
-
----
-
-## 开发约定
-
-- **README 同步更新**: 每次对话结束后，AI 助手需更新本文档以反映项目最新状态（新增功能、修改内容、待办事项等）
+- `README`、`src/run_pipeline.py`、`src/evaluate.py` 已按论文主线对齐。
+- 仓库中仍保留 COSMIC / FY-3D GNOS 的早期处理代码，用于回溯和兼容，不再是默认主入口。
+- 正式论文 PDF 位于 `docs/thesis/reports/220110814-林逸飞-基于掩星数据的气象要素反演系统设计与实现.pdf`。

@@ -9,6 +9,7 @@ import sys
 import json
 import io
 import csv
+import warnings
 from pathlib import Path
 import torch
 import numpy as np
@@ -20,6 +21,11 @@ from scipy.signal import savgol_filter
 # ─────────────────── 中文字体 & 绘图风格 ───────────────────
 mpl.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'DejaVu Sans']
 mpl.rcParams['axes.unicode_minus'] = False
+warnings.filterwarnings(
+    "ignore",
+    message=r".*Glyph.*missing from current font.*",
+    category=UserWarning,
+)
 
 # 项目路径
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -32,6 +38,7 @@ from ro_retrieval.config import (
 from ro_retrieval.model.unet import ConditionalUNet1D, EnhancedConditionalUNet1D
 from ro_retrieval.model.diffusion import DiffusionSchedule, ddpm_sample, ddim_sample
 from ro_retrieval.evaluation.metrics import evaluate_profile
+from ro_retrieval.stats_utils import canonicalize_stats, load_stats_from_dir
 
 # ─────────────────── 颜色系统 ───────────────────
 COLORS = {
@@ -399,7 +406,7 @@ def load_stats_bundle(data_dir):
             summary = json.load(f)
 
     if stats_path.exists():
-        stats = np.load(stats_path, allow_pickle=True).item()
+        stats = canonicalize_stats(np.load(stats_path, allow_pickle=True).item())
     else:
         result = load_data(data_dir)
         if result is None:
@@ -409,10 +416,6 @@ def load_stats_bundle(data_dir):
             summary = summary_from_data
         return stats, summary, heights
 
-    stats["x_mean"] = np.asarray(stats["x_mean"], dtype=np.float32)
-    stats["x_std"] = np.asarray(stats["x_std"], dtype=np.float32)
-    stats["y_mean"] = np.asarray(stats["y_mean"], dtype=np.float32)
-    stats["y_std"] = np.asarray(stats["y_std"], dtype=np.float32)
     heights = np.asarray(
         stats.get("target_heights", np.linspace(0, 60, 301)),
         dtype=np.float32,
@@ -436,18 +439,11 @@ def load_data(data_dir):
     if 'train' not in data:
         return None
 
-    stats_path = data_path / "stats.npy"
-    if stats_path.exists():
-        stats = np.load(stats_path, allow_pickle=True).item()
-    else:
-        raw_x, raw_y = data['train']['x'], data['train']['y']
-        stats = {
-            'x_mean': np.mean(raw_x),
-            'x_std': np.std(raw_x) + 1e-6,
-            'y_mean': np.mean(raw_y, axis=(0, 2)) if raw_y.ndim == 3 else np.mean(raw_y, axis=0),
-            'y_std': np.std(raw_y, axis=(0, 2)) + 1e-6 if raw_y.ndim == 3 else np.std(raw_y, axis=0) + 1e-6,
-            'target_heights': np.linspace(0, 60, raw_x.shape[-1]),
-        }
+    stats = load_stats_from_dir(
+        str(data_path),
+        x_fallback=data['train']['x'],
+        y_fallback=data['train']['y'],
+    )
 
     summary = None
     summary_path = data_path / "summary.json"
@@ -455,10 +451,6 @@ def load_data(data_dir):
         with open(summary_path, "r", encoding="utf-8") as f:
             summary = json.load(f)
 
-    stats["x_mean"] = np.asarray(stats["x_mean"], dtype=np.float32)
-    stats["x_std"] = np.asarray(stats["x_std"], dtype=np.float32)
-    stats["y_mean"] = np.asarray(stats["y_mean"], dtype=np.float32)
-    stats["y_std"] = np.asarray(stats["y_std"], dtype=np.float32)
     heights = np.asarray(
         stats.get("target_heights", np.linspace(0, 60, data["train"]["x"].shape[-1])),
         dtype=np.float32,
@@ -469,7 +461,7 @@ def load_data(data_dir):
 @st.cache_resource
 def load_model(path, model_type, out_ch):
     """加载模型权重, 自动检测架构"""
-    state_dict = torch.load(path, map_location=DEVICE)
+    state_dict = torch.load(path, map_location=DEVICE, weights_only=True)
     detected = "enhanced" if any(k.startswith("time_embed.") for k in state_dict) else "legacy"
     if model_type == "auto":
         model_type = detected
@@ -571,11 +563,39 @@ def denormalize_prediction(pred, stats, out_ch):
     return pred * y_std[:, None] + y_mean[:, None]
 
 
+def denormalize_input_profiles(x_array, stats):
+    """将标准化后的弯曲角恢复到展示空间。"""
+    x_mean = np.asarray(stats["x_mean"], dtype=np.float32)
+    x_std = np.asarray(stats["x_std"], dtype=np.float32)
+    return x_array.astype(np.float32) * x_std + x_mean
+
+
 def normalize_input_profiles(x_array, stats):
     """使用训练统计量标准化输入弯曲角。"""
     x_mean = np.asarray(stats["x_mean"], dtype=np.float32)
     x_std = np.asarray(stats["x_std"], dtype=np.float32)
     return (x_array.astype(np.float32) - x_mean) / (x_std + 1e-8)
+
+
+def denormalize_target_profiles(y_array, stats):
+    """将标准化标签恢复到展示空间。"""
+    arr = np.asarray(y_array, dtype=np.float32)
+    if stats.get("stats_space") == "normalized":
+        return arr
+
+    if arr.ndim == 1:
+        temp_mean, temp_std = get_temperature_stats(stats)
+        return arr * temp_std + temp_mean
+
+    y_mean = np.asarray(stats["y_mean"], dtype=np.float32)
+    y_std = np.asarray(stats["y_std"], dtype=np.float32)
+    if arr.ndim == 2:
+        channels = min(arr.shape[0], y_mean.shape[0])
+        return arr[:channels] * y_std[:channels, None] + y_mean[:channels, None]
+    if arr.ndim == 3:
+        channels = min(arr.shape[1], y_mean.shape[0])
+        return arr[:, :channels] * y_std[:channels][None, :, None] + y_mean[:channels][None, :, None]
+    raise ValueError(f"不支持的标签维度 {arr.ndim}")
 
 
 def ensure_x_shape(array):
@@ -846,7 +866,7 @@ def render_truth_preview(truth, heights):
             ax.set_ylim(0, 60)
             ax.legend(loc='upper right', framealpha=0.8)
             fig.tight_layout()
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width="stretch")
         plt.close(fig)
     elif truth.ndim == 1:
         with mpl.rc_context(get_plot_style()):
@@ -857,7 +877,7 @@ def render_truth_preview(truth, heights):
             ax.set_title('真值：温度剖面', pad=12)
             ax.set_ylim(0, 60)
             fig.tight_layout()
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width="stretch")
         plt.close(fig)
 
 
@@ -879,7 +899,7 @@ def render_prediction_results(pred_np, truth, heights):
                     ax.set_title('🌡 温度反演结果', pad=12)
                     ax.set_ylim(0, 60)
                     fig.tight_layout()
-            st.pyplot(fig, use_container_width=True)
+            st.pyplot(fig, width="stretch")
             plt.close(fig)
         with col2:
             if truth is not None:
@@ -953,7 +973,7 @@ def render_prediction_results(pred_np, truth, heights):
                         ax.set_title(f"{VAR_META[vi]['icon']} {VAR_META[vi]['name']}反演结果", pad=12)
                         ax.set_ylim(0, 60)
                         fig.tight_layout()
-                st.pyplot(fig, use_container_width=True)
+                st.pyplot(fig, width="stretch")
                 plt.close(fig)
 
 
@@ -1191,7 +1211,7 @@ def main():
             col_ba, col_truth = st.columns(2)
             with col_ba:
                 fig = plot_bending_angle(uploaded_x[preview_idx], heights)
-                st.pyplot(fig, use_container_width=True)
+                st.pyplot(fig, width="stretch")
                 plt.close(fig)
             with col_truth:
                 render_truth_preview(preview_truth, heights)
@@ -1290,7 +1310,12 @@ def main():
 
         data, stats, summary, heights = result
         dataset_name = os.path.basename(selected_data_dir)
-        stats_source = "stats.npy" if os.path.exists(os.path.join(selected_data_dir, "stats.npy")) else "train split fallback"
+        if os.path.exists(os.path.join(selected_data_dir, "stats.npy")):
+            stats_source = "stats.npy"
+        elif stats.get("stats_space") == "normalized":
+            stats_source = "normalized fallback"
+        else:
+            stats_source = "train split fallback"
 
         train_n = len(data['train']['x']) if 'train' in data else 0
         val_n = len(data['val']['x']) if 'val' in data else 0
@@ -1339,26 +1364,28 @@ def main():
             sample_idx = st.number_input("样本索引", 0, n_split - 1, value=min(42, n_split - 1))
         with col_btn:
             st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🎲 随机", use_container_width=True):
+            if st.button("🎲 随机", width="stretch"):
                 st.session_state['_rand_idx'] = int(np.random.randint(0, n_split))
                 st.rerun()
         if '_rand_idx' in st.session_state:
             sample_idx = st.session_state.pop('_rand_idx')
 
-        input_ba = split_x[sample_idx]
-        truth = split_y[sample_idx]
+        input_ba_std = split_x[sample_idx]
+        truth_std = split_y[sample_idx]
+        input_ba = denormalize_input_profiles(input_ba_std, stats)
+        truth = denormalize_target_profiles(truth_std, stats)
 
         st.markdown('<div class="section-title">输入数据</div>', unsafe_allow_html=True)
         col_ba, col_truth = st.columns(2)
         with col_ba:
             fig = plot_bending_angle(input_ba, heights)
-            st.pyplot(fig, use_container_width=True)
+            st.pyplot(fig, width="stretch")
             plt.close(fig)
         with col_truth:
             render_truth_preview(truth, heights)
 
         st.markdown('<div class="section-title">模型反演</div>', unsafe_allow_html=True)
-        if st.button("开始反演", type="primary", use_container_width=False):
+        if st.button("开始反演", type="primary", width="content"):
             try:
                 model = load_model(model_path, model_type, out_ch)
             except Exception as exc:
@@ -1366,7 +1393,8 @@ def main():
                 return
 
             schedule = DiffusionSchedule(TIMESTEPS, device=DEVICE)
-            cond_np = normalize_input_profiles(input_ba, stats)
+            # 本地数据集中的磁盘数组已经标准化，可直接作为模型输入。
+            cond_np = input_ba_std.astype(np.float32)
             cond = torch.tensor(cond_np).float().unsqueeze(0).unsqueeze(0).to(DEVICE)
 
             progress_bar = st.progress(0, text="初始化扩散采样...")
@@ -1453,8 +1481,11 @@ def main():
                 img_cols = st.columns(min(len(pngs), 3))
                 for i, png in enumerate(sorted(pngs)):
                     with img_cols[i % 3]:
-                        st.image(os.path.join(exp_path, png), caption=png.replace('.png', ''),
-                                 use_container_width=True)
+                        st.image(
+                            os.path.join(exp_path, png),
+                            caption=png.replace('.png', ''),
+                            width="stretch",
+                        )
 
     # ── 底部 ──
     st.markdown("""

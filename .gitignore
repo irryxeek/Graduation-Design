@@ -26,6 +26,12 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 build/
 develop-eggs/
 dist/
@@ -53,6 +59,7 @@ env/
 *.swp
 *.swo
 *~
+.streamlit/secrets.toml
 
 # 系统文件
 .DS_Store
@@ -78,3 +85,9 @@ utils/*.err.log
 utils/wget-log
 .claude/tmp_*.txt
 .claude/reference_*.txt
+
+# 评估/训练临时产物
+outputs/
+checkpoints/
+tmp/
+tmp_pdfs/

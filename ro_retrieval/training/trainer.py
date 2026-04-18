@@ -8,6 +8,7 @@
   - 训练日志 (loss_history) 保存为 JSON + npy
   - 支持 legacy / enhanced 两种模型
   - 支持单变量 / 多变量模式
+  - 当前默认配置对齐论文 ATP+WAP 主线
 """
 
 import os
@@ -22,11 +23,13 @@ from tqdm import tqdm
 
 from ro_retrieval.config import (
     DEVICE, BATCH_SIZE, EPOCHS, LEARNING_RATE,
-    TIMESTEPS, PROCESSED_DIR, PROJECT_ROOT,
+    TIMESTEPS, PAPER_EPOCHS, PAPER_HUMIDITY_GRAD_WEIGHT,
+    PAPER_MONITOR_TARGET, PAPER_PATIENCE, PAPER_PROCESSED_DIR,
+    PAPER_VAR_WEIGHTS, PROJECT_ROOT,
 )
 from ro_retrieval.data.dataset import RODataset, ROMultiVarDataset
 from ro_retrieval.model.unet import ConditionalUNet1D, EnhancedConditionalUNet1D
-from ro_retrieval.model.diffusion import DiffusionSchedule, ddim_sample
+from ro_retrieval.model.diffusion import DiffusionSchedule
 
 
 class Trainer:
@@ -35,7 +38,7 @@ class Trainer:
 
     Usage:
         trainer = Trainer(
-            data_dir="Data/Processed",
+            data_dir="Data/Processed_ATP_WAP_2025",
             model_type="enhanced",
             mode="multi",
         )
@@ -44,17 +47,20 @@ class Trainer:
 
     def __init__(
         self,
-        data_dir: str = PROCESSED_DIR,
+        data_dir: str = PAPER_PROCESSED_DIR,
         model_type: str = "enhanced",
         mode: str = "multi",
-        epochs: int = EPOCHS,
+        epochs: int = PAPER_EPOCHS,
         batch_size: int = BATCH_SIZE,
         lr: float = LEARNING_RATE,
         save_dir: str = PROJECT_ROOT,
-        patience: int = 20,
+        patience: int = PAPER_PATIENCE,
         save_every: int = 10,
         device=None,
         var_weights: list = None,
+        monitor_target: str = PAPER_MONITOR_TARGET,
+        humidity_grad_weight: float = PAPER_HUMIDITY_GRAD_WEIGHT,
+        humidity_cc_weight: float = 0.0,
     ):
         """
         Args:
@@ -68,7 +74,11 @@ class Trainer:
             patience: Early Stopping 容忍轮数
             save_every: 每隔多少轮保存检查点
             device: 计算设备
-            var_weights: 各变量的损失权重 [T, P, Q], 默认 [1.0, 1.0, 2.0] 加强比湿
+            var_weights: 各变量的损失权重 [T, P, Q], 默认按论文主线使用 [1.0, 1.0, 4.0]
+            monitor_target: Early Stopping 监控目标;
+                loss/temperature/pressure/humidity/humidity_cc
+            humidity_grad_weight: 湿度廓线梯度约束权重, 默认按论文主线使用 0.05
+            humidity_cc_weight: 湿度相关性损失权重, 0 表示关闭
         """
         self.data_dir = data_dir
         self.model_type = model_type
@@ -80,7 +90,10 @@ class Trainer:
         self.patience = patience
         self.save_every = save_every
         self.device = device or DEVICE
-        self.var_weights = var_weights or [1.0, 1.0, 2.0]  # 默认加强比湿权重
+        self.var_weights = var_weights or list(PAPER_VAR_WEIGHTS)
+        self.monitor_target = monitor_target
+        self.humidity_grad_weight = humidity_grad_weight
+        self.humidity_cc_weight = humidity_cc_weight
 
         # 训练日志
         self.train_losses = []
@@ -96,6 +109,114 @@ class Trainer:
         self.val_loader = None
         self.out_channels = 1
         self.model_prefix = "ro_diffusion"
+        self.variable_names = ["temperature", "pressure", "humidity"]
+        self.best_monitor_value = None
+
+    def _get_channel_weights(self):
+        """返回按输出通道裁剪/补齐后的损失权重张量。"""
+        if self.mode != "multi" or self.out_channels <= 1:
+            return None
+
+        weights = list(self.var_weights)
+        if len(weights) < self.out_channels:
+            weights.extend([weights[-1]] * (self.out_channels - len(weights)))
+
+        return torch.tensor(
+            weights[:self.out_channels],
+            device=self.device,
+            dtype=torch.float32,
+        ).view(1, -1, 1)
+
+    def _resolve_monitor_target(self):
+        """解析当前监控目标。"""
+        if self.monitor_target == "loss":
+            return "loss"
+        if self.monitor_target == "humidity_cc":
+            return "humidity_cc"
+
+        available = self.variable_names[:self.out_channels]
+        if self.monitor_target not in available:
+            raise ValueError(
+                f"monitor_target={self.monitor_target} 不可用, "
+                f"当前输出变量为: {available}"
+            )
+        return self.monitor_target
+
+    def _is_monitor_improved(self, monitor_target, monitor_value):
+        """判断监控指标是否改善。"""
+        if self.best_monitor_value is None:
+            return True
+        if monitor_target == "humidity_cc":
+            return monitor_value > self.best_monitor_value
+        return monitor_value < self.best_monitor_value
+
+    def _predict_x0(self, x_t, t, noise_pred):
+        """根据噪声预测反推 x0。"""
+        sqrt_alpha = self.schedule.sqrt_alphas_cumprod[t].view(-1, 1, 1)
+        sqrt_one_minus_alpha = self.schedule.sqrt_one_minus_alphas_cumprod[t].view(-1, 1, 1)
+        return (x_t - sqrt_one_minus_alpha * noise_pred) / (sqrt_alpha + 1e-8)
+
+    def _batch_profile_correlation(self, pred, truth):
+        """计算 batch 内逐样本廓线相关系数均值。"""
+        pred_centered = pred - pred.mean(dim=-1, keepdim=True)
+        truth_centered = truth - truth.mean(dim=-1, keepdim=True)
+        numerator = (pred_centered * truth_centered).mean(dim=-1)
+        denominator = (
+            pred_centered.pow(2).mean(dim=-1).sqrt()
+            * truth_centered.pow(2).mean(dim=-1).sqrt()
+            + 1e-8
+        )
+        cc = numerator / denominator
+        cc = torch.clamp(cc, -1.0, 1.0)
+        return cc.mean()
+
+    def _compute_loss(self, noise_pred, noise, x_t, t, x_0, weights):
+        """统一计算训练/验证损失及附加诊断项。"""
+        sq_error = (noise_pred - noise) ** 2
+        if weights is not None:
+            base_loss = torch.mean(weights * sq_error)
+        else:
+            base_loss = torch.mean(sq_error)
+
+        humidity_grad_loss = torch.tensor(0.0, device=noise_pred.device)
+        humidity_cc_loss = torch.tensor(0.0, device=noise_pred.device)
+        humidity_cc_value = torch.tensor(0.0, device=noise_pred.device)
+        pred_x0 = None
+        if (
+            (self.humidity_grad_weight > 0 or self.humidity_cc_weight > 0)
+            and self.mode == "multi"
+            and self.out_channels >= 3
+        ):
+            pred_x0 = self._predict_x0(x_t, t, noise_pred)
+        if (
+            self.humidity_grad_weight > 0
+            and pred_x0 is not None
+        ):
+            pred_h = pred_x0[:, 2, :]
+            true_h = x_0[:, 2, :]
+            pred_grad = pred_h[:, 1:] - pred_h[:, :-1]
+            true_grad = true_h[:, 1:] - true_h[:, :-1]
+            humidity_grad_loss = nn.functional.mse_loss(pred_grad, true_grad)
+        if (
+            self.humidity_cc_weight > 0
+            and pred_x0 is not None
+        ):
+            pred_h = pred_x0[:, 2, :]
+            true_h = x_0[:, 2, :]
+            humidity_cc_value = self._batch_profile_correlation(pred_h, true_h)
+            humidity_cc_loss = 1.0 - humidity_cc_value
+
+        total_loss = (
+            base_loss
+            + self.humidity_grad_weight * humidity_grad_loss
+            + self.humidity_cc_weight * humidity_cc_loss
+        )
+        return total_loss, {
+            "base_loss": float(base_loss.detach().item()),
+            "humidity_grad_loss": float(humidity_grad_loss.detach().item()),
+            "humidity_cc_loss": float(humidity_cc_loss.detach().item()),
+            "humidity_cc_value": float(humidity_cc_value.detach().item()),
+        }
 
     def _setup(self):
         """初始化数据集、模型、优化器"""
@@ -178,14 +299,7 @@ class Trainer:
         epoch_loss = 0
         n_batches = 0
 
-        # 构建加权损失的权重张量
-        if self.mode == "multi" and self.out_channels > 1:
-            weights = torch.tensor(
-                self.var_weights[:self.out_channels],
-                device=self.device, dtype=torch.float32
-            ).view(1, -1, 1)  # (1, C, 1) 用于广播
-        else:
-            weights = None
+        weights = self._get_channel_weights()
 
         pbar = tqdm(self.train_loader, desc=f"Epoch {epoch + 1}/{self.epochs} [Train]")
         for condition, x_0 in pbar:
@@ -198,12 +312,14 @@ class Trainer:
             x_t = self.schedule.q_sample(x_0, t, noise)
 
             noise_pred = self.model(x_t, t, condition)
-
-            # 加权MSE损失
-            if weights is not None:
-                loss = torch.mean(weights * (noise_pred - noise) ** 2)
-            else:
-                loss = nn.functional.mse_loss(noise_pred, noise)
+            loss, loss_info = self._compute_loss(
+                noise_pred=noise_pred,
+                noise=noise,
+                x_t=x_t,
+                t=t,
+                x_0=x_0,
+                weights=weights,
+            )
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -213,7 +329,10 @@ class Trainer:
 
             epoch_loss += loss.item()
             n_batches += 1
-            pbar.set_postfix({"loss": f"{loss.item():.6f}"})
+            postfix = {"loss": f"{loss.item():.6f}"}
+            if self.humidity_grad_weight > 0 and self.out_channels >= 3:
+                postfix["q_grad"] = f"{loss_info['humidity_grad_loss']:.6f}"
+            pbar.set_postfix(postfix)
 
         return epoch_loss / max(n_batches, 1)
 
@@ -221,9 +340,13 @@ class Trainer:
     def _validate(self):
         """验证集评估"""
         self.model.eval()
-        loss_fn = nn.MSELoss()
         val_loss = 0
         n_batches = 0
+        weights = self._get_channel_weights()
+        per_var_loss = torch.zeros(self.out_channels, dtype=torch.float64)
+        humidity_grad_loss_sum = 0.0
+        humidity_cc_sum = 0.0
+        humidity_cc_loss_sum = 0.0
 
         for condition, x_0 in self.val_loader:
             condition = condition.to(self.device)
@@ -235,12 +358,35 @@ class Trainer:
             x_t = self.schedule.q_sample(x_0, t, noise)
 
             noise_pred = self.model(x_t, t, condition)
-            loss = loss_fn(noise_pred, noise)
+            channel_mse = ((noise_pred - noise) ** 2).mean(dim=(0, 2))
+            per_var_loss += channel_mse.detach().cpu().double()
+            loss, loss_info = self._compute_loss(
+                noise_pred=noise_pred,
+                noise=noise,
+                x_t=x_t,
+                t=t,
+                x_0=x_0,
+                weights=weights,
+            )
+            humidity_grad_loss_sum += loss_info["humidity_grad_loss"]
+            humidity_cc_sum += loss_info["humidity_cc_value"]
+            humidity_cc_loss_sum += loss_info["humidity_cc_loss"]
 
             val_loss += loss.item()
             n_batches += 1
 
-        return val_loss / max(n_batches, 1)
+        avg_val_loss = val_loss / max(n_batches, 1)
+        avg_per_var_loss = (per_var_loss / max(n_batches, 1)).tolist()
+        return {
+            "loss": avg_val_loss,
+            "humidity_grad_loss": humidity_grad_loss_sum / max(n_batches, 1),
+            "humidity_cc": humidity_cc_sum / max(n_batches, 1),
+            "humidity_cc_loss": humidity_cc_loss_sum / max(n_batches, 1),
+            "per_var_loss": {
+                self.variable_names[i]: float(avg_per_var_loss[i])
+                for i in range(self.out_channels)
+            },
+        }
 
     def train(self):
         """执行完整训练流程"""
@@ -259,6 +405,7 @@ class Trainer:
         print(f"{'=' * 60}\n")
 
         start_time = time.time()
+        monitor_target = self._resolve_monitor_target()
 
         for epoch in range(self.epochs):
             # 训练
@@ -266,26 +413,57 @@ class Trainer:
             self.train_losses.append(train_loss)
 
             # 验证
-            val_loss = self._validate()
+            val_metrics = self._validate()
+            val_loss = val_metrics["loss"]
+            if monitor_target == "loss":
+                monitor_value = val_loss
+            elif monitor_target == "humidity_cc":
+                monitor_value = val_metrics["humidity_cc"]
+            else:
+                monitor_value = val_metrics["per_var_loss"][monitor_target]
             self.val_losses.append(val_loss)
 
+            best_monitor_str = (
+                f"{self.best_monitor_value:.6f}"
+                if self.best_monitor_value is not None
+                else "N/A"
+            )
             print(f"Epoch {epoch + 1:3d}/{self.epochs}  "
                   f"train_loss={train_loss:.6f}  val_loss={val_loss:.6f}  "
-                  f"best_val={self.best_val_loss:.6f}")
+                  f"monitor({monitor_target})={monitor_value:.6f}  "
+                  f"best_monitor={best_monitor_str}")
+            if self.out_channels > 1:
+                per_var_str = "  ".join(
+                    f"{name}={value:.6f}"
+                    for name, value in val_metrics["per_var_loss"].items()
+                )
+                extra = ""
+                if self.humidity_grad_weight > 0 and self.out_channels >= 3:
+                    extra = f"  q_grad={val_metrics['humidity_grad_loss']:.6f}"
+                if self.out_channels >= 3:
+                    extra += f"  q_cc={val_metrics['humidity_cc']:.6f}"
+                print(f"  [Val per-var] {per_var_str}{extra}")
 
             # Early Stopping 逻辑
-            if val_loss < self.best_val_loss:
+            if self._is_monitor_improved(monitor_target, monitor_value):
+                self.best_monitor_value = monitor_value
                 self.best_val_loss = val_loss
                 self.epochs_no_improve = 0
                 best_path = os.path.join(
                     self.save_dir, f"{self.model_prefix}_best.pth"
                 )
                 torch.save(self.model.state_dict(), best_path)
-                print(f"  [BEST] 最佳模型已保存: {best_path}")
+                print(
+                    f"  [BEST] 最佳模型已保存: {best_path} "
+                    f"(monitor={monitor_target}:{monitor_value:.6f})"
+                )
             else:
                 self.epochs_no_improve += 1
                 if self.epochs_no_improve >= self.patience:
-                    print(f"\n[Early Stopping] 验证损失连续 {self.patience} 轮无改善, 停止训练")
+                    print(
+                        f"\n[Early Stopping] 监控指标 {monitor_target} 连续 "
+                        f"{self.patience} 轮无改善, 停止训练"
+                    )
                     break
 
             # 定期保存检查点
@@ -299,6 +477,7 @@ class Trainer:
         elapsed = time.time() - start_time
         print(f"\n训练完成! 耗时: {elapsed / 60:.1f} 分钟")
         print(f"最佳验证损失: {self.best_val_loss:.6f}")
+        print(f"最佳监控指标({monitor_target}): {self.best_monitor_value:.6f}")
 
         # 保存训练日志
         self._save_log()
@@ -313,12 +492,17 @@ class Trainer:
             "out_channels": self.out_channels,
             "epochs_trained": len(self.train_losses),
             "best_val_loss": float(self.best_val_loss),
+            "best_monitor_value": float(self.best_monitor_value),
             "train_losses": [float(x) for x in self.train_losses],
             "val_losses": [float(x) for x in self.val_losses],
             "config": {
                 "batch_size": self.batch_size,
                 "lr": self.lr,
                 "patience": self.patience,
+                "var_weights": [float(x) for x in self.var_weights],
+                "monitor_target": self.monitor_target,
+                "humidity_grad_weight": self.humidity_grad_weight,
+                "humidity_cc_weight": self.humidity_cc_weight,
             },
         }
 
@@ -336,134 +520,64 @@ class Trainer:
     @torch.no_grad()
     def evaluate_test(self, model_path: str = None, num_samples: int = 5):
         """
-        在独立测试集上评估模型性能
+        在独立测试集上评估模型性能。
+
+        当前实现直接复用 `src.evaluate` 的论文主线评估口径，
+        避免训练器内部再维护一套偏离主实验结果的逻辑。
 
         Args:
             model_path: 模型权重路径，默认使用 best 模型
-            num_samples: 扩散采样时的重复次数（用于估计不确定性）
+            num_samples: 评估样本数；<=0 表示评估全部测试集
 
         Returns:
-            dict: 包含各项评估指标的字典
+            dict: 包含评估摘要和结果文件路径的字典
         """
-        # 确保模型已初始化
         if self.model is None:
             self._setup()
 
-        # 加载模型权重
         if model_path is None:
             model_path = os.path.join(self.save_dir, f"{self.model_prefix}_best.pth")
-
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"模型文件不存在: {model_path}")
 
-        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-        self.model.eval()
-        print(f"[Evaluate] 已加载模型: {model_path}")
+        from types import SimpleNamespace
+        from src.evaluate import main as evaluate_main
 
-        # 加载测试集
-        test_x_path = os.path.join(self.data_dir, "test_x.npy")
-        test_y_path = os.path.join(self.data_dir, "test_y.npy")
-
-        if not os.path.exists(test_x_path):
-            raise FileNotFoundError(f"测试集不存在: {test_x_path}")
-
-        if self.mode == "multi":
-            test_dataset = ROMultiVarDataset(test_x_path, test_y_path)
-        else:
-            test_dataset = RODataset(test_x_path, test_y_path)
-
-        test_loader = DataLoader(
-            test_dataset, batch_size=self.batch_size, shuffle=False,
-            num_workers=0, pin_memory=True,
+        os.makedirs(self.save_dir, exist_ok=True)
+        eval_save_dir = os.path.join(self.save_dir, f"{self.model_prefix}_test_eval")
+        evaluate_main(
+            SimpleNamespace(
+                model_path=model_path,
+                model_type=self.model_type,
+                sampler="ddim",
+                ddim_steps=50,
+                n_samples=0 if num_samples <= 0 else num_samples,
+                batch_size=self.batch_size,
+                out_channels=self.out_channels,
+                data_dir=self.data_dir,
+                save_dir=eval_save_dir,
+                seed=42,
+                metric_space="standardized",
+                smooth=True,
+                no_smooth=False,
+            )
         )
 
-        print(f"[Evaluate] 测试集样本数: {len(test_dataset)}")
+        report_path = os.path.join(eval_save_dir, "evaluation_report.json")
+        with open(report_path, "r", encoding="utf-8") as f:
+            report = json.load(f)
 
-        # 收集预测结果
-        all_preds = []
-        all_targets = []
-        all_conditions = []
-
-        print(f"[Evaluate] 开始推理 (采样次数: {num_samples})...")
-        for condition, x_0 in tqdm(test_loader, desc="Testing"):
-            condition = condition.to(self.device)
-            x_0 = x_0.to(self.device)
-
-            # 多次采样取平均（减少随机性影响）
-            preds_samples = []
-            for _ in range(num_samples):
-                # 使用 DDIM 加速采样
-                shape = x_0.shape
-                pred = ddim_sample(
-                    self.model, condition, shape, self.schedule,
-                    ddim_steps=50, eta=0.0, device=self.device
-                )
-                preds_samples.append(pred.cpu().numpy())
-
-            # 取多次采样的均值
-            pred_mean = np.mean(preds_samples, axis=0)
-            all_preds.append(pred_mean)
-            all_targets.append(x_0.cpu().numpy())
-            all_conditions.append(condition.cpu().numpy())
-
-        # 合并所有批次
-        all_preds = np.concatenate(all_preds, axis=0)      # (N, C, L)
-        all_targets = np.concatenate(all_targets, axis=0)  # (N, C, L)
-        all_conditions = np.concatenate(all_conditions, axis=0)
-
-        # 反归一化（使用测试集自身的统计量）
-        stats = test_dataset.get_stats()
-        preds_denorm = all_preds * stats["y_std"] + stats["y_mean"]
-        targets_denorm = all_targets * stats["y_std"] + stats["y_mean"]
-
-        # 如果比湿做了对数变换，需要反变换
-        if stats.get("log_transform_humidity", False) and preds_denorm.shape[1] >= 3:
-            # log10(q + 1e-6) -> q
-            preds_denorm[:, 2, :] = 10 ** preds_denorm[:, 2, :] - 1e-6
-            targets_denorm[:, 2, :] = 10 ** targets_denorm[:, 2, :] - 1e-6
-            # 确保非负
-            preds_denorm[:, 2, :] = np.clip(preds_denorm[:, 2, :], 0, None)
-            targets_denorm[:, 2, :] = np.clip(targets_denorm[:, 2, :], 0, None)
-
-        # 计算评估指标
-        metrics = self._compute_metrics(preds_denorm, targets_denorm)
-
-        # 打印结果
-        print(f"\n{'=' * 60}")
-        print("测试集评估结果")
-        print(f"{'=' * 60}")
-        print(f"  样本数      : {len(test_dataset)}")
-        print(f"  MSE         : {metrics['mse']:.6f}")
-        print(f"  RMSE        : {metrics['rmse']:.6f}")
-        print(f"  MAE         : {metrics['mae']:.6f}")
-        print(f"  R2 (平均)   : {metrics['r2_mean']:.4f}")
-        print(f"  相关系数    : {metrics['corr_mean']:.4f}")
-
-        if self.mode == "multi" and self.out_channels == 3:
-            var_names = ["温度 (T)", "压力 (P)", "比湿 (Q)"]
-            var_units = ["K", "hPa", "kg/kg"]
-            print(f"\n  各变量详细指标:")
-            for i, (name, unit) in enumerate(zip(var_names, var_units)):
-                print(f"    {name}:")
-                print(f"      RMSE : {metrics['rmse_per_var'][i]:.4f} {unit}")
-                print(f"      MAE  : {metrics['mae_per_var'][i]:.4f} {unit}")
-                print(f"      R2   : {metrics['r2_per_var'][i]:.4f}")
-                print(f"      Corr : {metrics['corr_per_var'][i]:.4f}")
-        print(f"{'=' * 60}\n")
-
-        # 保存评估结果
         result = {
             "model_path": model_path,
-            "test_samples": len(test_dataset),
-            "num_diffusion_samples": num_samples,
-            "metrics": metrics,
+            "test_samples": report.get("n_samples"),
+            "evaluation_report_path": report_path,
+            "summary": report.get("summary", {}),
+            "metadata": report.get("metadata", {}),
         }
 
         result_path = os.path.join(self.save_dir, f"{self.model_prefix}_test_results.json")
         with open(result_path, "w", encoding="utf-8") as f:
-            # 转换 numpy 类型为 Python 原生类型
-            json_result = json.loads(json.dumps(result, default=lambda x: float(x) if isinstance(x, np.floating) else x.tolist() if isinstance(x, np.ndarray) else x))
-            json.dump(json_result, f, indent=2, ensure_ascii=False)
+            json.dump(result, f, indent=2, ensure_ascii=False)
         print(f"评估结果已保存: {result_path}")
 
         return result

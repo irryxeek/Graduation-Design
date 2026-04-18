@@ -1,0 +1,83 @@
+[
+  {
+    "name": "equal_no_constraint",
+    "label": "等权无约束",
+    "var_weights": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "humidity_grad_weight": 0.0,
+    "seed": 42,
+    "train_dir": "experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint",
+    "model_path": "experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/enhanced_ro_diffusion_best.pth",
+    "temperature_cc": 0.6932535249316204,
+    "pressure_cc": 0.9991246575959353,
+    "humidity_cc": 0.823281838498997,
+    "humidity_rmse": 0.8626455651194532,
+    "report_path": "experiments/table5_4_ablation_rerun_20260418T225500Z/equal_no_constraint/eval_ddpm_fulltest/evaluation_report.json",
+    "best_val_loss": 0.011851562538634468,
+    "best_monitor_value": 0.009435422869633562,
+    "epochs_trained": 50,
+    "paper_delta": {
+      "temperature_cc": -0.09234647506837956,
+      "pressure_cc": -7.534240406470438e-05,
+      "humidity_cc": 0.212881838498997,
+      "humidity_rmse": -0.008554434880546746
+    }
+  },
+  {
+    "name": "weighted_no_constraint",
+    "label": "加权无约束",
+    "var_weights": [
+      1.0,
+      1.0,
+      4.0
+    ],
+    "humidity_grad_weight": 0.0,
+    "seed": 42,
+    "train_dir": "experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint",
+    "model_path": "experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/enhanced_ro_diffusion_best.pth",
+    "temperature_cc": 0.7016506813144539,
+    "pressure_cc": 0.9992111785981562,
+    "humidity_cc": 0.8361703217231214,
+    "humidity_rmse": 0.8090727722369495,
+    "report_path": "experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_no_constraint/eval_ddpm_fulltest/evaluation_report.json",
+    "best_val_loss": 0.021353472332587307,
+    "best_monitor_value": 0.00892485725070467,
+    "epochs_trained": 50,
+    "paper_delta": {
+      "temperature_cc": -0.08144931868554617,
+      "pressure_cc": 0.0002111785981562253,
+      "humidity_cc": 0.15787032172312143,
+      "humidity_rmse": -0.0065272277630504805
+    }
+  },
+  {
+    "name": "weighted_with_grad",
+    "label": "加权+梯度约束（最终）",
+    "var_weights": [
+      1.0,
+      1.0,
+      4.0
+    ],
+    "humidity_grad_weight": 0.05,
+    "seed": 42,
+    "train_dir": "experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad",
+    "model_path": "experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/enhanced_ro_diffusion_best.pth",
+    "temperature_cc": 0.7279835740609069,
+    "pressure_cc": 0.999067507434522,
+    "humidity_cc": 0.8377941289317629,
+    "humidity_rmse": 0.8594650585807815,
+    "report_path": "experiments/table5_4_ablation_rerun_20260418T225500Z/weighted_with_grad/eval_ddpm_fulltest/evaluation_report.json",
+    "best_val_loss": 0.022297053542358197,
+    "best_monitor_value": 0.009187804380838839,
+    "epochs_trained": 50,
+    "paper_delta": {
+      "temperature_cc": -0.05401642593909317,
+      "pressure_cc": 6.750743452199615e-05,
+      "humidity_cc": 0.1417941289317629,
+      "humidity_rmse": 0.059865058580781505
+    }
+  }
+]

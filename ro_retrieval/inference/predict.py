@@ -9,6 +9,7 @@ import numpy as np
 from scipy.signal import savgol_filter
 
 from ro_retrieval.config import DEVICE, SAVGOL_WINDOW, SAVGOL_POLYORDER
+from ro_retrieval.stats_utils import canonicalize_stats
 
 
 def run_inference(model, condition_raw, stats, schedule, device=DEVICE,
@@ -30,6 +31,7 @@ def run_inference(model, condition_raw, stats, schedule, device=DEVICE,
     np.ndarray  预测结果 shape=(301,) 或 (num_vars, 301)
     """
     from ro_retrieval.model.diffusion import ddpm_sample
+    stats = canonicalize_stats(stats)
 
     # 标准化输入
     x_norm = (condition_raw - stats["x_mean"]) / stats["x_std"]
@@ -41,13 +43,13 @@ def run_inference(model, condition_raw, stats, schedule, device=DEVICE,
 
     # 反归一化
     pred = gen.squeeze(0).cpu().numpy()  # (out_ch, 301)
-    y_mean = stats["y_mean"]
-    y_std = stats["y_std"]
+    y_mean = np.asarray(stats["y_mean"], dtype=np.float32)
+    y_std = np.asarray(stats["y_std"], dtype=np.float32)
 
     if pred.ndim == 1:
         pred = pred * y_std + y_mean
     else:
-        pred = pred * y_std + y_mean
+        pred = pred * y_std[:, None] + y_mean[:, None]
 
     # 平滑
     if smooth:
@@ -66,6 +68,7 @@ def run_inference_ddim(model, condition_raw, stats, schedule, device=DEVICE,
     DDIM 加速推理单条样本
     """
     from ro_retrieval.model.diffusion import ddim_sample
+    stats = canonicalize_stats(stats)
 
     x_norm = (condition_raw - stats["x_mean"]) / stats["x_std"]
     cond = torch.tensor(x_norm).float().unsqueeze(0).unsqueeze(0).to(device)
@@ -74,13 +77,13 @@ def run_inference_ddim(model, condition_raw, stats, schedule, device=DEVICE,
                       schedule=schedule, ddim_steps=ddim_steps, device=device)
 
     pred = gen.squeeze(0).cpu().numpy()
-    y_mean = stats["y_mean"]
-    y_std = stats["y_std"]
+    y_mean = np.asarray(stats["y_mean"], dtype=np.float32)
+    y_std = np.asarray(stats["y_std"], dtype=np.float32)
 
     if pred.ndim == 1:
         pred = pred * y_std + y_mean
     else:
-        pred = pred * y_std + y_mean
+        pred = pred * y_std[:, None] + y_mean[:, None]
 
     if smooth:
         if pred.ndim == 1:

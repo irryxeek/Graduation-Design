@@ -16,6 +16,15 @@ except ImportError:
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_ROOT, "Data")
 PROCESSED_DIR = os.path.join(DATA_DIR, "Processed")
+PAPER_PROCESSED_DIR = os.path.join(DATA_DIR, "Processed_ATP_WAP_2025")
+PAPER_ATP_DIR = os.path.join(DATA_DIR, "FY-3", "ATP_WAP_2025_RAW", "ATP")
+PAPER_WAP_DIR = os.path.join(DATA_DIR, "FY-3", "ATP_WAP_2025_RAW", "WAP")
+PAPER_MODEL_PATH = os.path.join(
+    PROJECT_ROOT,
+    "experiments",
+    "atp_wap_2025_hw4_hmon_g005",
+    "enhanced_ro_diffusion_best.pth",
+)
 SAMPLE_DIR = os.path.join(DATA_DIR, "Sample")
 MODEL_DIR = os.path.join(PROJECT_ROOT, "checkpoints")  # 模型权重目录
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "outputs")     # 输出目录
@@ -42,6 +51,13 @@ NUM_OUTPUT_VARS = len(OUTPUT_VARIABLES)  # 3
 BATCH_SIZE = 64
 EPOCHS = 100
 LEARNING_RATE = 1e-4
+
+# 论文主线推荐配置
+PAPER_EPOCHS = 50
+PAPER_PATIENCE = 15
+PAPER_VAR_WEIGHTS = [1.0, 1.0, 4.0]
+PAPER_MONITOR_TARGET = "humidity"
+PAPER_HUMIDITY_GRAD_WEIGHT = 0.05
 
 # 扩散模型参数
 TIMESTEPS = 1000
