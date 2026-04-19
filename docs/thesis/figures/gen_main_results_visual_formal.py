@@ -1,5 +1,4 @@
 from pathlib import Path
-import json
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -14,12 +13,16 @@ matplotlib.rcParams["font.sans-serif"] = [
 ]
 matplotlib.rcParams["axes.unicode_minus"] = False
 
-
-REPORT_PATH = Path("experiments/atp_wap_2025_hw4_hmon_g005_eval_fulltest/evaluation_report.json")
 OUT_DIR = Path("docs/thesis/figures")
 PNG_PATH = OUT_DIR / "main_results_visual_formal.png"
 SVG_PATH = OUT_DIR / "main_results_visual_formal.svg"
 PDF_PATH = OUT_DIR / "main_results_visual_formal.pdf"
+
+LATEST_RESULTS = {
+    "temperature": {"label": "温度", "rmse": 0.7704, "bias": -0.0754, "cc": 0.7250},
+    "pressure": {"label": "气压", "rmse": 0.0821, "bias": -0.0154, "cc": 0.9991},
+    "humidity": {"label": "湿度", "rmse": 0.8482, "bias": 0.0010, "cc": 0.8270},
+}
 
 COLORS = {
     "temperature": "#C23B22",
@@ -48,12 +51,14 @@ def add_value_labels(ax, bars, fmt="{:.4f}", offset_ratio=0.025):
     offset = (y_max - y_min) * offset_ratio
     for bar in bars:
         height = bar.get_height()
+        va = "bottom" if height >= 0 else "top"
+        y = height + offset if height >= 0 else height - offset
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            height + offset,
+            y,
             fmt.format(height),
             ha="center",
-            va="bottom",
+            va=va,
             fontsize=8.4,
             color=COLORS["muted"],
         )
@@ -62,7 +67,6 @@ def add_value_labels(ax, bars, fmt="{:.4f}", offset_ratio=0.025):
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    data = json.loads(REPORT_PATH.read_text(encoding="utf-8"))["summary"]
     variables = [
         ("temperature", "温度"),
         ("pressure", "气压"),
@@ -72,16 +76,18 @@ def main():
     x = np.arange(len(labels))
     bar_colors = [COLORS[key] for key, _ in variables]
 
-    rmse = np.array([data[key]["rmse_mean"] for key, _ in variables], dtype=float)
-    bias = np.array([data[key]["bias_mean"] for key, _ in variables], dtype=float)
-    cc = np.array([data[key]["cc_mean"] for key, _ in variables], dtype=float)
+    rmse = np.array([LATEST_RESULTS[key]["rmse"] for key, _ in variables], dtype=float)
+    bias = np.array([LATEST_RESULTS[key]["bias"] for key, _ in variables], dtype=float)
+    cc = np.array([LATEST_RESULTS[key]["cc"] for key, _ in variables], dtype=float)
 
     fig, axes = plt.subplots(1, 3, figsize=(11.2, 4.6))
     fig.patch.set_facecolor(COLORS["bg"])
 
+    bias_limit = max(abs(float(np.min(bias))), abs(float(np.max(bias)))) * 1.35
+
     metrics = [
         ("RMSE", rmse, (0, max(rmse) * 1.18)),
-        ("Bias", bias, (0, max(bias) * 1.30)),
+        ("Bias", bias, (-bias_limit, bias_limit)),
         ("CC", cc, (0, 1.08)),
     ]
 
@@ -98,6 +104,8 @@ def main():
         ax.set_ylim(*ylim)
         ax.set_ylabel(metric_name, fontsize=10.5, color=COLORS["text"])
         style_axis(ax)
+        if metric_name == "Bias":
+            ax.axhline(0, color=COLORS["spine"], linewidth=1.0)
         add_value_labels(ax, bars)
 
     handles = [

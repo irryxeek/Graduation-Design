@@ -64,7 +64,9 @@
       "Bash(\"/c/Users/sense/AppData/Local/Microsoft/WinGet/Packages/JernejSimoncic.Wget_Microsoft.Winget.Source_8wekyb3d8bbwe/wget.exe\" --version)",
       "Bash(pandoc \"docs/defense/林逸飞-220110814-本科毕业设计开题报告.docx\" -o /tmp/opening_report.md)",
       "Bash(cygpath -w /tmp/opening_report_unpacked/word/document.xml)",
-      "Bash(.venv/Scripts/streamlit run:*)"
+      "Bash(.venv/Scripts/streamlit run:*)",
+      "Bash(pandoc --track-changes=all \"docs/thesis/reports/220110814-林逸飞-基于掩星数据的气象要素反演系统设计与实现.docx\" -o /tmp/thesis.md)",
+      "Bash(git add *)"
     ],
     "additionalDirectories": [
       "/Users/placebo/Downloads",
