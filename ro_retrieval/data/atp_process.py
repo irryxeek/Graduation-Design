@@ -272,13 +272,15 @@ class ATPProcessor:
             'x_mean': np.nanmean(X),
             'x_std': np.nanstd(X),
             'y_mean': np.nanmean(Y, axis=(0, 2)),  # (2,)
-            'y_std': np.nanstd(Y, axis=(0, 2))
+            'y_std': np.nanstd(Y, axis=(0, 2)),
+            'pressure_log_transformed': True,
+            'pressure_unit': 'hPa',
         }
 
         logger.info("=== 数据统计 (标准化前) ===")
         logger.info(f"弯曲角 (log10): mean={stats['x_mean']:.3f}, std={stats['x_std']:.3f}")
         logger.info(f"温度: mean={stats['y_mean'][0]:.1f} K, std={stats['y_std'][0]:.1f} K")
-        logger.info(f"气压: mean={stats['y_mean'][1]:.1f} mb, std={stats['y_std'][1]:.1f} mb")
+        logger.info(f"气压(log10): mean={stats['y_mean'][1]:.3f}, std={stats['y_std'][1]:.3f}")
 
         return stats
 

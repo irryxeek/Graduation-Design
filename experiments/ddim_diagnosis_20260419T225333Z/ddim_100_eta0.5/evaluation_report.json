@@ -1,0 +1,74 @@
+{
+  "summary": {
+    "temperature": {
+      "count": 9618,
+      "rmse_mean": NaN,
+      "rmse_std": NaN,
+      "rmse_min": NaN,
+      "rmse_max": NaN,
+      "bias_mean": NaN,
+      "bias_std": NaN,
+      "cc_mean": NaN,
+      "cc_min": NaN,
+      "cc_max": NaN
+    },
+    "pressure": {
+      "count": 9618,
+      "rmse_mean": NaN,
+      "rmse_std": NaN,
+      "rmse_min": NaN,
+      "rmse_max": NaN,
+      "bias_mean": NaN,
+      "bias_std": NaN,
+      "cc_mean": NaN,
+      "cc_min": NaN,
+      "cc_max": NaN
+    },
+    "humidity": {
+      "count": 9618,
+      "rmse_mean": NaN,
+      "rmse_std": NaN,
+      "rmse_min": NaN,
+      "rmse_max": NaN,
+      "bias_mean": NaN,
+      "bias_std": NaN,
+      "cc_mean": NaN,
+      "cc_min": NaN,
+      "cc_max": NaN
+    }
+  },
+  "n_samples": 9618,
+  "metadata": {
+    "sampler": "ddim",
+    "ddim_steps": 100,
+    "ddim_eta": 0.5,
+    "batch_size": 64,
+    "model_path": "experiments/main_rerun_current_standard_20260419T121928Z/enhanced_ro_diffusion_best.pth",
+    "model_type": "enhanced",
+    "out_channels": 3,
+    "data_dir": "Data/Processed_ATP_WAP_2025",
+    "metric_space": "physical",
+    "smooth": true,
+    "pressure_log_transformed": true,
+    "height_bands": [
+      "0-5km",
+      "5-20km",
+      "20-60km"
+    ],
+    "condition_input_space": "legacy_train_split_restandardized",
+    "prediction_calibration": "legacy_train_split_mean_std",
+    "device": "cuda",
+    "evaluated_at_utc": "2026-04-19T23:01:46.241742+00:00",
+    "seed": 42
+  },
+  "height_band_summary": {
+    "0-5km": {},
+    "5-20km": {},
+    "20-60km": {}
+  },
+  "units": {
+    "temperature": "K",
+    "pressure": "hPa",
+    "humidity": "g/kg"
+  }
+}

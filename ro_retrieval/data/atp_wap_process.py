@@ -167,6 +167,9 @@ class ATPWAPProcessor:
             "y_mean": np.nanmean(y, axis=(0, 2)),
             "y_std": np.nanstd(y, axis=(0, 2)),
             "target_heights": self.target_heights,
+            "pressure_log_transformed": True,
+            "pressure_unit": "hPa",
+            "humidity_unit": "g/kg",
         }
 
         logger.info("=== 数据统计 (标准化前) ===")

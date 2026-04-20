@@ -220,7 +220,7 @@ class EvaluationReport:
 
         for var_name, m in s.items():
             unit = "K" if var_name == "temperature" else (
-                "hPa" if var_name == "pressure" else "kg/kg"
+                "hPa" if var_name == "pressure" else "g/kg"
             )
             print(f"\n  [{var_name.upper()}]  (N={m['count']})")
             print(f"    RMSE  : {m['rmse_mean']:.4f} ± {m['rmse_std']:.4f} {unit}")
@@ -230,7 +230,7 @@ class EvaluationReport:
 
         print("\n" + "=" * 60)
 
-    def save_json(self, filepath, metadata=None):
+    def save_json(self, filepath, metadata=None, extra=None):
         """保存评估结果到 JSON"""
         output = {
             "summary": self.summary(),
@@ -238,6 +238,8 @@ class EvaluationReport:
         }
         if metadata is not None:
             output["metadata"] = metadata
+        if extra is not None:
+            output.update(extra)
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(output, f, indent=2, ensure_ascii=False)
         print(f"评估报告已保存: {filepath}")

@@ -30,6 +30,20 @@ def canonicalize_stats(stats: Dict[str, Any]) -> Dict[str, Any]:
     if "target_heights" in result:
         result["target_heights"] = np.asarray(result["target_heights"], dtype=np.float32)
 
+    if "pressure_log_transformed" not in result:
+        y_mean = result.get("y_mean")
+        if y_mean is not None and np.asarray(y_mean).shape[0] >= 2:
+            # ATP / ATP+WAP 主线数据的气压以 log10(P) 存储; 若均值量级明显小于典型 hPa,
+            # 则保守地推断该通道尚处于对数空间。
+            result["pressure_log_transformed"] = bool(np.asarray(y_mean)[1] < 10.0)
+        else:
+            result["pressure_log_transformed"] = False
+
+    if "pressure_unit" not in result:
+        result["pressure_unit"] = "hPa"
+    if "humidity_unit" not in result:
+        result["humidity_unit"] = "g/kg"
+
     if "stats_space" not in result:
         result["stats_space"] = "physical"
     return result
