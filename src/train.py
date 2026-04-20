@@ -75,6 +75,10 @@ def parse_args():
                         help="湿度廓线梯度约束权重; 例如 0.05")
     parser.add_argument("--humidity_cc_weight", type=float, default=0.0,
                         help="湿度相关性损失权重; 例如 0.1")
+    parser.add_argument("--residual_prior_model", choices=["mlp", "cnn"], default=None,
+                        help="启用先验引导残差扩散不确定性分支时使用的判别式先验模型")
+    parser.add_argument("--residual_prior_path", type=str, default=None,
+                        help="不确定性分支先验模型权重路径")
     return parser.parse_args()
 
 
@@ -96,6 +100,8 @@ def main():
         monitor_target=args.monitor_target,
         humidity_grad_weight=args.humidity_grad_weight,
         humidity_cc_weight=args.humidity_cc_weight,
+        residual_prior_model=args.residual_prior_model,
+        residual_prior_path=args.residual_prior_path,
     )
 
     trainer.train()

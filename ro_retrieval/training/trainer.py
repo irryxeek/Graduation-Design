@@ -28,6 +28,7 @@ from ro_retrieval.config import (
     PAPER_VAR_WEIGHTS, PROJECT_ROOT,
 )
 from ro_retrieval.data.dataset import RODataset, ROMultiVarDataset
+from ro_retrieval.model.baselines import load_baseline_checkpoint
 from ro_retrieval.model.unet import ConditionalUNet1D, EnhancedConditionalUNet1D
 from ro_retrieval.model.diffusion import DiffusionSchedule
 
@@ -61,6 +62,8 @@ class Trainer:
         monitor_target: str = PAPER_MONITOR_TARGET,
         humidity_grad_weight: float = PAPER_HUMIDITY_GRAD_WEIGHT,
         humidity_cc_weight: float = 0.0,
+        residual_prior_model: str = None,
+        residual_prior_path: str = None,
     ):
         """
         Args:
@@ -79,7 +82,14 @@ class Trainer:
                 loss/temperature/pressure/humidity/humidity_cc
             humidity_grad_weight: 湿度廓线梯度约束权重, 默认按论文主线使用 0.05
             humidity_cc_weight: 湿度相关性损失权重, 0 表示关闭
+            residual_prior_model: 不确定性分支使用的判别式先验模型类型; None 表示关闭
+            residual_prior_path: 先验模型权重路径
         """
+        if bool(residual_prior_model) != bool(residual_prior_path):
+            raise ValueError(
+                "residual_prior_model 与 residual_prior_path 必须同时提供或同时省略"
+            )
+
         self.data_dir = data_dir
         self.model_type = model_type
         self.mode = mode
@@ -94,6 +104,9 @@ class Trainer:
         self.monitor_target = monitor_target
         self.humidity_grad_weight = humidity_grad_weight
         self.humidity_cc_weight = humidity_cc_weight
+        self.residual_prior_model = residual_prior_model
+        self.residual_prior_path = residual_prior_path
+        self.use_uncertainty_branch = residual_prior_model is not None
 
         # 训练日志
         self.train_losses = []
@@ -108,6 +121,8 @@ class Trainer:
         self.train_loader = None
         self.val_loader = None
         self.out_channels = 1
+        self.cond_channels = 1
+        self.prior_model = None
         self.model_prefix = "ro_diffusion"
         self.variable_names = ["temperature", "pressure", "humidity"]
         self.best_monitor_value = None
@@ -218,6 +233,35 @@ class Trainer:
             "humidity_cc_value": float(humidity_cc_value.detach().item()),
         }
 
+    @torch.no_grad()
+    def _compute_prior(self, condition):
+        """用冻结的判别式基线生成先验剖面。"""
+        if not self.use_uncertainty_branch:
+            return None
+        if self.prior_model is None:
+            raise RuntimeError("不确定性分支已启用，但先验模型尚未加载")
+        prior = self.prior_model(condition)
+        if prior.shape[1] != self.out_channels:
+            raise RuntimeError(
+                f"先验模型输出通道数 {prior.shape[1]} 与扩散输出通道数 {self.out_channels} 不一致"
+            )
+        return prior.detach()
+
+    def _augment_condition(self, condition, prior):
+        """将原始条件与先验剖面拼接为扩散条件。"""
+        if not self.use_uncertainty_branch:
+            return condition
+        if prior is None:
+            raise RuntimeError("不确定性分支模式下 prior 不能为空")
+        return torch.cat([condition, prior], dim=1)
+
+    def _prepare_targets(self, condition, x_0):
+        """根据当前模式准备扩散训练目标与条件输入。"""
+        prior = self._compute_prior(condition)
+        cond_input = self._augment_condition(condition, prior)
+        target_x0 = x_0 if prior is None else x_0 - prior
+        return target_x0, cond_input, prior
+
     def _setup(self):
         """初始化数据集、模型、优化器"""
 
@@ -268,11 +312,29 @@ class Trainer:
 
         print(f"[Trainer] 训练集: {len(train_dataset)}, 验证集: {len(val_dataset)}")
 
+        if self.use_uncertainty_branch:
+            self.prior_model = load_baseline_checkpoint(
+                name=self.residual_prior_model,
+                checkpoint_path=self.residual_prior_path,
+                input_length=301,
+                out_channels=self.out_channels,
+                device=self.device,
+            )
+            for param in self.prior_model.parameters():
+                param.requires_grad_(False)
+            self.cond_channels = 1 + self.out_channels
+            print(
+                "[Trainer] 先验引导残差扩散不确定性分支: "
+                f"prior={self.residual_prior_model}, path={self.residual_prior_path}"
+            )
+        else:
+            self.cond_channels = 1
+
         # ---- 模型 ----
         if self.model_type == "enhanced":
             self.model = EnhancedConditionalUNet1D(
                 in_channels=self.out_channels,
-                cond_channels=1,
+                cond_channels=self.cond_channels,
                 out_channels=self.out_channels,
                 use_cross_attention=True,
             ).to(self.device)
@@ -280,7 +342,7 @@ class Trainer:
         else:
             self.model = ConditionalUNet1D(
                 in_channels=self.out_channels,
-                cond_channels=1,
+                cond_channels=self.cond_channels,
                 out_channels=self.out_channels,
             ).to(self.device)
             self.model_prefix = "ro_diffusion"
@@ -305,19 +367,20 @@ class Trainer:
         for condition, x_0 in pbar:
             condition = condition.to(self.device)
             x_0 = x_0.to(self.device)
+            target_x0, cond_input, _prior = self._prepare_targets(condition, x_0)
             b = x_0.shape[0]
 
             t = torch.randint(0, TIMESTEPS, (b, 1), device=self.device).long()
-            noise = torch.randn_like(x_0)
-            x_t = self.schedule.q_sample(x_0, t, noise)
+            noise = torch.randn_like(target_x0)
+            x_t = self.schedule.q_sample(target_x0, t, noise)
 
-            noise_pred = self.model(x_t, t, condition)
+            noise_pred = self.model(x_t, t, cond_input)
             loss, loss_info = self._compute_loss(
                 noise_pred=noise_pred,
                 noise=noise,
                 x_t=x_t,
                 t=t,
-                x_0=x_0,
+                x_0=target_x0,
                 weights=weights,
             )
 
@@ -351,13 +414,14 @@ class Trainer:
         for condition, x_0 in self.val_loader:
             condition = condition.to(self.device)
             x_0 = x_0.to(self.device)
+            target_x0, cond_input, _prior = self._prepare_targets(condition, x_0)
             b = x_0.shape[0]
 
             t = torch.randint(0, TIMESTEPS, (b, 1), device=self.device).long()
-            noise = torch.randn_like(x_0)
-            x_t = self.schedule.q_sample(x_0, t, noise)
+            noise = torch.randn_like(target_x0)
+            x_t = self.schedule.q_sample(target_x0, t, noise)
 
-            noise_pred = self.model(x_t, t, condition)
+            noise_pred = self.model(x_t, t, cond_input)
             channel_mse = ((noise_pred - noise) ** 2).mean(dim=(0, 2))
             per_var_loss += channel_mse.detach().cpu().double()
             loss, loss_info = self._compute_loss(
@@ -365,7 +429,7 @@ class Trainer:
                 noise=noise,
                 x_t=x_t,
                 t=t,
-                x_0=x_0,
+                x_0=target_x0,
                 weights=weights,
             )
             humidity_grad_loss_sum += loss_info["humidity_grad_loss"]
@@ -401,6 +465,11 @@ class Trainer:
         print(f"  LR       : {self.lr}")
         print(f"  模式     : {self.mode} ({self.out_channels} channels)")
         print(f"  模型     : {self.model_type}")
+        print(f"  条件通道 : {self.cond_channels}")
+        if self.use_uncertainty_branch:
+            print(
+                f"  不确定性先验 : {self.residual_prior_model} @ {self.residual_prior_path}"
+            )
         print(f"  Patience : {self.patience}")
         print(f"{'=' * 60}\n")
 
@@ -503,6 +572,13 @@ class Trainer:
                 "monitor_target": self.monitor_target,
                 "humidity_grad_weight": self.humidity_grad_weight,
                 "humidity_cc_weight": self.humidity_cc_weight,
+                "cond_channels": self.cond_channels,
+                "use_uncertainty_branch": self.use_uncertainty_branch,
+                "uncertainty_branch_type": "prior_guided_residual_diffusion"
+                if self.use_uncertainty_branch
+                else "plain_diffusion",
+                "uncertainty_branch_prior_model": self.residual_prior_model,
+                "uncertainty_branch_prior_path": self.residual_prior_path,
             },
         }
 
@@ -560,6 +636,11 @@ class Trainer:
                 metric_space="standardized",
                 smooth=True,
                 no_smooth=False,
+                ddim_eta=0.0,
+                height_bands="0-5,5-20,20-60",
+                pressure_log_transformed="auto",
+                residual_prior_model=self.residual_prior_model,
+                residual_prior_path=self.residual_prior_path,
             )
         )
 

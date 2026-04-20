@@ -66,3 +66,20 @@ def build_baseline(name: str, input_length: int = 301, out_channels: int = 3) ->
     if name == "cnn":
         return CNNBaseline1D(out_channels=out_channels)
     raise ValueError(f"未知基线模型: {name}")
+
+
+def load_baseline_checkpoint(
+    name: str,
+    checkpoint_path: str,
+    input_length: int = 301,
+    out_channels: int = 3,
+    device: torch.device | None = None,
+) -> nn.Module:
+    """加载判别式基线权重并切换到 eval 模式。"""
+    model = build_baseline(name, input_length=input_length, out_channels=out_channels)
+    state_dict = torch.load(checkpoint_path, map_location=device or "cpu", weights_only=True)
+    model.load_state_dict(state_dict)
+    if device is not None:
+        model = model.to(device)
+    model.eval()
+    return model

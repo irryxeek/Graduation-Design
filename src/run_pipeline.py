@@ -77,16 +77,22 @@ def parse_args():
     )
     train.add_argument("--humidity_grad_weight", type=float, default=0.05)
     train.add_argument("--humidity_cc_weight", type=float, default=0.0)
+    train.add_argument("--residual_prior_model", choices=["mlp", "cnn"], default=None)
+    train.add_argument("--residual_prior_path", type=str, default=None)
 
     evaluate = parser.add_argument_group("评估")
     evaluate.add_argument("--model_path", type=str, default=None)
     evaluate.add_argument("--sampler", choices=["ddpm", "ddim"], default="ddim")
     evaluate.add_argument("--ddim_steps", type=int, default=50)
+    evaluate.add_argument("--ddim_eta", type=float, default=0.0)
     evaluate.add_argument("--n_eval_samples", type=int, default=0)
     evaluate.add_argument("--eval_batch_size", type=int, default=64)
     evaluate.add_argument("--eval_save_dir", type=str, default=None)
     evaluate.add_argument("--metric_space", choices=["standardized", "physical"], default="standardized")
     evaluate.add_argument("--no_smooth", action="store_true")
+    evaluate.add_argument("--height_bands", type=str, default="0-5,5-20,20-60")
+    evaluate.add_argument("--pressure_log_transformed", choices=["auto", "true", "false"], default="auto")
+    evaluate.add_argument("--residual_mode", choices=["refinement", "uncertainty_only"], default="refinement")
 
     return parser.parse_args()
 
@@ -171,6 +177,8 @@ def stage_train(args):
         monitor_target=args.monitor_target,
         humidity_grad_weight=args.humidity_grad_weight,
         humidity_cc_weight=args.humidity_cc_weight,
+        residual_prior_model=args.residual_prior_model,
+        residual_prior_path=args.residual_prior_path,
     )
     trainer.train()
 
@@ -207,6 +215,7 @@ def stage_evaluate(args):
         model_type=args.model_type,
         sampler=args.sampler,
         ddim_steps=args.ddim_steps,
+        ddim_eta=args.ddim_eta,
         n_samples=args.n_eval_samples,
         batch_size=args.eval_batch_size,
         out_channels=3 if args.var_mode == "multi" else 1,
@@ -217,6 +226,11 @@ def stage_evaluate(args):
         data_space="auto",
         smooth=not args.no_smooth,
         no_smooth=args.no_smooth,
+        height_bands=args.height_bands,
+        pressure_log_transformed=args.pressure_log_transformed,
+        residual_prior_model=args.residual_prior_model,
+        residual_prior_path=args.residual_prior_path,
+        residual_mode=args.residual_mode,
     )
     evaluate_main(eval_args)
     return True

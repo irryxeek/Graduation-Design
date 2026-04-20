@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 
 from ro_retrieval.config import DEVICE, PAPER_PROCESSED_DIR, PROJECT_ROOT, SAVGOL_POLYORDER, SAVGOL_WINDOW, TIMESTEPS
 from ro_retrieval.model.diffusion import DiffusionSchedule, ddpm_sample
+from ro_retrieval.model.baselines import load_baseline_checkpoint
 from ro_retrieval.model.unet import EnhancedConditionalUNet1D
 from ro_retrieval.stats_utils import canonicalize_stats
 
@@ -45,6 +46,17 @@ def parse_args():
     parser.add_argument("--save_root", type=str, default=os.path.join(PROJECT_ROOT, "experiments"))
     parser.add_argument("--case_indices", type=str, default="")
     parser.add_argument("--smooth", action="store_true", default=True)
+    parser.add_argument("--prior_model", choices=["mlp", "cnn"], default="mlp")
+    parser.add_argument(
+        "--prior_path",
+        type=str,
+        default=os.path.join(
+            PROJECT_ROOT,
+            "experiments",
+            "baseline_mlp_20260419T224628Z",
+            "mlp_best.pth",
+        ),
+    )
     return parser.parse_args()
 
 
@@ -74,10 +86,6 @@ def _restore_physical_targets(values, physical_y_mean, physical_y_std, out_chann
     return restored
 
 
-def _apply_legacy_prediction_calibration(preds, legacy_y_mean, legacy_y_std):
-    return preds * legacy_y_std[np.newaxis, :, :] + legacy_y_mean[np.newaxis, :, :]
-
-
 def _maybe_smooth_batch(preds, enabled):
     if not enabled:
         return preds
@@ -96,7 +104,7 @@ def _maybe_smooth_batch(preds, enabled):
 def _build_model(model_path, out_channels):
     model = EnhancedConditionalUNet1D(
         in_channels=out_channels,
-        cond_channels=1,
+        cond_channels=1 + out_channels,
         out_channels=out_channels,
         use_cross_attention=True,
     ).to(DEVICE)
@@ -104,6 +112,16 @@ def _build_model(model_path, out_channels):
     model.load_state_dict(state)
     model.eval()
     return model
+
+
+def _build_prior_model(prior_model, prior_path, out_channels):
+    return load_baseline_checkpoint(
+        name=prior_model,
+        checkpoint_path=prior_path,
+        input_length=301,
+        out_channels=out_channels,
+        device=DEVICE,
+    )
 
 
 def _select_indices(args, n_total):
@@ -140,6 +158,9 @@ def _write_summary_md(path, summary):
         f"- 样本数: `{summary['metadata']['n_cases']}`",
         f"- 每样本重复采样次数: `{summary['metadata']['n_repeats']}`",
         f"- 采样器: `{summary['metadata']['sampler']}`",
+        f"- 点估计器: `{summary['metadata']['point_estimator']}`",
+        f"- 区间中心: `{summary['metadata']['interval_center']}`",
+        f"- 区间宽度来源: `{summary['metadata']['interval_width_source']}`",
         f"- 指标空间: `{summary['metadata']['metric_space']}`",
         "",
         "## 整体结果",
@@ -176,10 +197,9 @@ def main():
     os.makedirs(save_dir, exist_ok=True)
 
     print("加载数据...")
-    test_x, test_y, train_x, train_y = _load_arrays(args.data_dir, args.split)
+    test_x, test_y, _train_x, _train_y = _load_arrays(args.data_dir, args.split)
     out_channels = min(args.out_channels, test_y.shape[1])
     test_y = test_y[:, :out_channels, :]
-    train_y = train_y[:, :out_channels, :]
     var_names = ["temperature", "pressure", "humidity"][:out_channels]
 
     physical_stats = _load_stats(args.data_dir)
@@ -191,16 +211,10 @@ def main():
     physical_y_mean = np.asarray(physical_stats["y_mean"], dtype=np.float32)[:out_channels]
     physical_y_std = np.asarray(physical_stats["y_std"], dtype=np.float32)[:out_channels]
 
-    print("计算兼容评估统计量...")
-    x_mean = np.mean(train_x, axis=0)
-    x_std = np.std(train_x, axis=0) + 1e-6
-    legacy_y_mean = np.mean(train_y, axis=0)
-    legacy_y_std = np.std(train_y, axis=0) + 1e-6
-
     case_indices = _select_indices(args, len(test_x))
     print(f"选取样本: {case_indices}")
-    cond_input = (np.asarray(test_x[case_indices], dtype=np.float32) - x_mean) / x_std
-    cond = torch.tensor(cond_input, dtype=torch.float32, device=DEVICE).unsqueeze(1)
+    x_batch = np.asarray(test_x[case_indices], dtype=np.float32)
+    cond = torch.tensor(x_batch, dtype=torch.float32, device=DEVICE).unsqueeze(1)
     truths_std = np.asarray(test_y[case_indices], dtype=np.float32)
     truths = _restore_physical_targets(
         truths_std,
@@ -212,39 +226,53 @@ def main():
 
     print(f"加载模型: {args.model_path}")
     model = _build_model(args.model_path, out_channels=out_channels)
+    print(f"加载先验模型: {args.prior_path}")
+    prior_model = _build_prior_model(args.prior_model, args.prior_path, out_channels=out_channels)
     schedule = DiffusionSchedule(TIMESTEPS, device=DEVICE)
 
-    all_preds = []
+    with torch.no_grad():
+        prior_std = prior_model(cond).detach()
+    diffusion_cond = torch.cat([cond, prior_std], dim=1)
+    prior_std_np = prior_std.cpu().numpy()
+    prior_phys = _restore_physical_targets(
+        prior_std_np,
+        physical_y_mean,
+        physical_y_std,
+        out_channels,
+        pressure_log_transformed,
+    )
+    prior_phys = _maybe_smooth_batch(prior_phys, args.smooth)
+
+    all_residual_preds = []
     for repeat_idx in range(args.n_repeats):
         seed = args.seed + repeat_idx
         np.random.seed(seed)
         torch.manual_seed(seed)
         print(f"[repeat {repeat_idx + 1}/{args.n_repeats}] seed={seed}")
         with torch.no_grad():
-            gen = ddpm_sample(
+            residual_std = ddpm_sample(
                 model,
-                cond,
+                diffusion_cond,
                 shape=(len(case_indices), out_channels, 301),
                 schedule=schedule,
                 device=DEVICE,
             )
-        preds_std = gen.cpu().numpy()
-        preds_calibrated = _apply_legacy_prediction_calibration(preds_std, legacy_y_mean, legacy_y_std)
-        preds_phys = _restore_physical_targets(
-            preds_calibrated,
+        residual_std_np = residual_std.cpu().numpy()
+        residual_phys = _restore_physical_targets(
+            prior_std_np + residual_std_np,
             physical_y_mean,
             physical_y_std,
             out_channels,
             pressure_log_transformed,
-        )
-        preds_phys = _maybe_smooth_batch(preds_phys, args.smooth)
-        all_preds.append(preds_phys)
+        ) - prior_phys
+        residual_phys = _maybe_smooth_batch(prior_phys + residual_phys, args.smooth) - prior_phys
+        all_residual_preds.append(residual_phys)
 
-    all_preds = np.asarray(all_preds, dtype=np.float32)  # (R, N, C, L)
-    mean_preds = np.mean(all_preds, axis=0)
-    std_preds = np.std(all_preds, axis=0)
-    lower = np.percentile(all_preds, 2.5, axis=0)
-    upper = np.percentile(all_preds, 97.5, axis=0)
+    all_residual_preds = np.asarray(all_residual_preds, dtype=np.float32)  # (R, N, C, L)
+    std_preds = np.std(all_residual_preds, axis=0)
+    lower = prior_phys + np.percentile(all_residual_preds, 2.5, axis=0)
+    upper = prior_phys + np.percentile(all_residual_preds, 97.5, axis=0)
+    mean_preds = prior_phys
 
     global_summary = {}
     units = {"temperature": "K", "pressure": "hPa", "humidity": "g/kg"}
@@ -334,6 +362,10 @@ def main():
             "model_path": os.path.relpath(args.model_path, PROJECT_ROOT)
             if os.path.isabs(args.model_path)
             else args.model_path,
+            "prior_model": args.prior_model,
+            "prior_path": os.path.relpath(args.prior_path, PROJECT_ROOT)
+            if os.path.isabs(args.prior_path)
+            else args.prior_path,
             "data_dir": os.path.relpath(args.data_dir, PROJECT_ROOT)
             if os.path.isabs(args.data_dir)
             else args.data_dir,
@@ -344,6 +376,11 @@ def main():
             "device": str(DEVICE),
             "evaluated_at_utc": datetime.now(timezone.utc).isoformat(),
             "seed": args.seed,
+            "point_estimator": args.prior_model,
+            "interval_center": args.prior_model,
+            "interval_width_source": "diffusion residual samples",
+            "diffusion_target": "dataset_standardized_residual",
+            "hybrid_estimator": f"{args.prior_model}_center_plus_diffusion_residual_interval",
         },
         "global_summary": global_summary,
         "height_band_summary": height_band_summary,

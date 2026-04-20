@@ -38,6 +38,7 @@ from ro_retrieval.evaluation.metrics import (
     compute_rmse_profile,
 )
 from ro_retrieval.model.diffusion import DiffusionSchedule, ddim_sample, ddpm_sample
+from ro_retrieval.model.baselines import load_baseline_checkpoint
 from ro_retrieval.model.unet import ConditionalUNet1D, EnhancedConditionalUNet1D
 from ro_retrieval.stats_utils import canonicalize_stats
 
@@ -97,6 +98,14 @@ def parse_args():
         default="auto",
         help="物理空间评估时, 是否将第2通道按 log10(P) 反变换为 hPa",
     )
+    parser.add_argument("--residual_prior_model", choices=["mlp", "cnn"], default=None)
+    parser.add_argument("--residual_prior_path", type=str, default=None)
+    parser.add_argument(
+        "--residual_mode",
+        choices=["refinement", "uncertainty_only"],
+        default="refinement",
+        help="refinement=prior+sampled_residual 作为最终点预测; uncertainty_only=主指标仅评估 prior",
+    )
     return parser.parse_args()
 
 
@@ -132,18 +141,58 @@ def _load_split_arrays(data_dir):
 
 
 def _build_model(args):
+    cond_channels = 1 + args.out_channels if args.residual_prior_model else 1
     if args.model_type == "enhanced":
         return EnhancedConditionalUNet1D(
             in_channels=args.out_channels,
-            cond_channels=1,
+            cond_channels=cond_channels,
             out_channels=args.out_channels,
             use_cross_attention=True,
         ).to(DEVICE)
     return ConditionalUNet1D(
         in_channels=args.out_channels,
-        cond_channels=1,
+        cond_channels=cond_channels,
         out_channels=args.out_channels,
     ).to(DEVICE)
+
+
+def _load_prior_model(args):
+    if bool(args.residual_prior_model) != bool(args.residual_prior_path):
+        raise ValueError(
+            "residual_prior_model 与 residual_prior_path 必须同时提供或同时省略"
+        )
+    if not args.residual_prior_model:
+        return None
+    return load_baseline_checkpoint(
+        name=args.residual_prior_model,
+        checkpoint_path=args.residual_prior_path,
+        input_length=301,
+        out_channels=args.out_channels,
+        device=DEVICE,
+    )
+
+
+def _resolve_prediction_semantics(args, prior_model):
+    if prior_model is None:
+        return {
+            "residual_mode": "disabled",
+            "point_estimator": "diffusion",
+            "interval_center": "sample_mean",
+            "final_prediction_space_before_legacy_calibration": "sampled_prediction",
+        }
+    if args.residual_mode == "uncertainty_only":
+        return {
+            "residual_mode": "uncertainty_only",
+            "point_estimator": args.residual_prior_model,
+            "interval_center": args.residual_prior_model,
+            "final_prediction_space_before_legacy_calibration": "prior_only",
+        }
+    return {
+        "residual_mode": "refinement",
+        "point_estimator": "prior_plus_sampled_residual",
+        "interval_center": "prior_plus_sampled_residual",
+        "final_prediction_space_before_legacy_calibration": "baseline_plus_sampled_residual",
+    }
 
 
 def _maybe_smooth(pred, enabled):
@@ -304,6 +353,8 @@ def main(args=None):
 
     model.eval()
     schedule = DiffusionSchedule(TIMESTEPS, device=DEVICE)
+    prior_model = _load_prior_model(args)
+    semantics = _resolve_prediction_semantics(args, prior_model)
 
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -334,37 +385,56 @@ def main(args=None):
         input_ba = raw_x[batch_indices]
         true_vals = raw_y[batch_indices]
 
-        # 当前论文主线与历史报告均沿用 train split 逐层再标准化的输入口径。
-        cond_input = (input_ba - x_mean) / x_std
+        # 传统扩散主线沿用 train split 再标准化口径；
+        # 先验引导残差扩散分支则直接使用数据集原始标准化空间，需与训练保持一致。
+        if prior_model is not None:
+            cond_input = input_ba
+        else:
+            cond_input = (input_ba - x_mean) / x_std
         cond = torch.tensor(cond_input, dtype=torch.float32, device=DEVICE).unsqueeze(1)
+        prior_std = None
+        if prior_model is not None:
+            prior_input = torch.tensor(input_ba, dtype=torch.float32, device=DEVICE).unsqueeze(1)
+            with torch.no_grad():
+                prior_std = prior_model(prior_input).detach()
+            cond = torch.cat([cond, prior_std], dim=1)
 
-        with torch.no_grad():
-            if args.sampler == "ddim":
-                gen = ddim_sample(
-                    model,
-                    cond,
-                    shape=(len(batch_indices), args.out_channels, 301),
-                    schedule=schedule,
-                    ddim_steps=args.ddim_steps,
-                    eta=args.ddim_eta,
-                )
-            else:
-                gen = ddpm_sample(
-                    model,
-                    cond,
-                    shape=(len(batch_indices), args.out_channels, 301),
-                    schedule=schedule,
-                )
+        if prior_model is not None and args.residual_mode == "uncertainty_only":
+            preds = prior_std.cpu().numpy()
+        else:
+            with torch.no_grad():
+                if args.sampler == "ddim":
+                    gen = ddim_sample(
+                        model,
+                        cond,
+                        shape=(len(batch_indices), args.out_channels, 301),
+                        schedule=schedule,
+                        ddim_steps=args.ddim_steps,
+                        eta=args.ddim_eta,
+                    )
+                else:
+                    gen = ddpm_sample(
+                        model,
+                        cond,
+                        shape=(len(batch_indices), args.out_channels, 301),
+                        schedule=schedule,
+                    )
 
-        preds = gen.cpu().numpy()
-        preds_calibrated = _apply_legacy_prediction_calibration(
-            preds,
-            legacy_y_mean,
-            legacy_y_std,
-        )
+            if prior_std is not None:
+                gen = gen + prior_std
+            preds = gen.cpu().numpy()
+
+        if prior_model is not None:
+            preds_metric_base = preds
+        else:
+            preds_metric_base = _apply_legacy_prediction_calibration(
+                preds,
+                legacy_y_mean,
+                legacy_y_std,
+            )
         if args.metric_space == "physical":
             preds_metric = _restore_physical_targets(
-                preds_calibrated,
+                preds_metric_base,
                 physical_y_mean,
                 physical_y_std,
                 args.out_channels,
@@ -378,7 +448,7 @@ def main(args=None):
                 pressure_log_transformed,
             )
         else:
-            preds_metric = preds_calibrated
+            preds_metric = preds_metric_base
             truths_metric = true_vals
 
         for local_idx, sample_idx in enumerate(batch_indices):
@@ -425,11 +495,24 @@ def main(args=None):
             "smooth": args.smooth,
             "pressure_log_transformed": pressure_log_transformed,
             "height_bands": [label for label, _, _ in height_band_specs],
-            "condition_input_space": "legacy_train_split_restandardized",
-            "prediction_calibration": "legacy_train_split_mean_std",
+            "condition_input_space": "dataset_standardized"
+            if prior_model is not None
+            else "legacy_train_split_restandardized",
+            "prediction_calibration": "none"
+            if prior_model is not None
+            else "legacy_train_split_mean_std",
             "device": str(DEVICE),
             "evaluated_at_utc": datetime.now(timezone.utc).isoformat(),
             "seed": args.seed,
+            "use_residual_prior": prior_model is not None,
+            "residual_prior_model": args.residual_prior_model,
+            "residual_prior_path": os.path.relpath(args.residual_prior_path, PROJECT_ROOT)
+            if prior_model is not None and os.path.isabs(args.residual_prior_path)
+            else args.residual_prior_path,
+            "residual_mode": semantics["residual_mode"],
+            "point_estimator": semantics["point_estimator"],
+            "interval_center": semantics["interval_center"],
+            "interval_width_source": "diffusion residual samples" if prior_model is not None else None,
         },
         extra={
             "height_band_summary": height_band_summary,
@@ -437,6 +520,20 @@ def main(args=None):
                 "temperature": "K" if args.metric_space == "physical" else "standardized",
                 "pressure": "hPa" if args.metric_space == "physical" else "standardized",
                 "humidity": "g/kg" if args.metric_space == "physical" else "standardized",
+            },
+            "prior_guided_diffusion": {
+                "enabled": prior_model is not None,
+                "baseline_prediction_space": "dataset_standardized",
+                "diffusion_target_space": "dataset_standardized_residual"
+                if prior_model is not None
+                else "dataset_standardized",
+                "residual_mode": semantics["residual_mode"],
+                "point_estimator": semantics["point_estimator"],
+                "interval_center": semantics["interval_center"],
+                "interval_width_source": "diffusion residual samples" if prior_model is not None else None,
+                "final_prediction_space_before_legacy_calibration": semantics[
+                    "final_prediction_space_before_legacy_calibration"
+                ],
             },
         },
     )
