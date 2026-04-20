@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "alpha": 0.05,
+    "calib_npz": "experiments/baseline_mlp_mcdo_val_20260420T130943Z/interval_payload.npz",
+    "test_npz": "experiments/baseline_mlp_mcdo_test_20260420T130918Z/interval_payload.npz",
+    "evaluated_at_utc": "2026-04-20T13:18:16.844784+00:00"
+  },
+  "q_hat": {
+    "temperature": {
+      "q_hat": 22.893646240234375,
+      "unit": "K"
+    },
+    "pressure": {
+      "q_hat": 3.2153778076171875,
+      "unit": "hPa"
+    },
+    "humidity": {
+      "q_hat": 0.9278996586799622,
+      "unit": "g/kg"
+    }
+  },
+  "global_summary": {
+    "temperature": {
+      "coverage_95": 0.9397010207176208,
+      "mean_interval_width": 50.19245147705078,
+      "mean_abs_error": 7.850828647613525,
+      "unit": "K"
+    },
+    "pressure": {
+      "coverage_95": 0.958604633808136,
+      "mean_interval_width": 38.412986755371094,
+      "mean_abs_error": 7.339653015136719,
+      "unit": "hPa"
+    },
+    "humidity": {
+      "coverage_95": 0.9522923827171326,
+      "mean_interval_width": 2.0090415477752686,
+      "mean_abs_error": 0.30735769867897034,
+      "unit": "g/kg"
+    }
+  },
+  "height_band_summary": {
+    "0-5km": {
+      "temperature": {
+        "coverage_95": 0.8831999897956848,
+        "mean_interval_width": 50.242374420166016,
+        "mean_abs_error": 12.227846145629883
+      },
+      "pressure": {
+        "coverage_95": 0.9675999879837036,
+        "mean_interval_width": 243.3096923828125,
+        "mean_abs_error": 41.43168640136719
+      },
+      "humidity": {
+        "coverage_95": 0.6323999762535095,
+        "mean_interval_width": 2.7807958126068115,
+        "mean_abs_error": 1.639666199684143
+      }
+    },
+    "5-20km": {
+      "temperature": {
+        "coverage_95": 0.9333333373069763,
+        "mean_interval_width": 49.57597732543945,
+        "mean_abs_error": 6.362986087799072
+      },
+      "pressure": {
+        "coverage_95": 0.8850666880607605,
+        "mean_interval_width": 54.042015075683594,
+        "mean_abs_error": 14.435028076171875
+      },
+      "humidity": {
+        "coverage_95": 0.9488000273704529,
+        "mean_interval_width": 2.0230510234832764,
+        "mean_abs_error": 0.4532620310783386
+      }
+    },
+    "20-60km": {
+      "temperature": {
+        "coverage_95": 0.9491044878959656,
+        "mean_interval_width": 50.41626739501953,
+        "mean_abs_error": 7.861588954925537
+      },
+      "pressure": {
+        "coverage_95": 0.984925389289856,
+        "mean_interval_width": 7.096590518951416,
+        "mean_abs_error": 0.4518227279186249
+      },
+      "humidity": {
+        "coverage_95": 0.9933831095695496,
+        "mean_interval_width": 1.9078247547149658,
+        "mean_abs_error": 0.08720575273036957
+      }
+    }
+  }
+}

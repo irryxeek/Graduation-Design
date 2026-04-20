@@ -1,0 +1,192 @@
+{
+  "metadata": {
+    "sampler": "ddpm",
+    "metric_space": "physical",
+    "model_path": "experiments/main_rerun_current_standard_20260419T121928Z/enhanced_ro_diffusion_best.pth",
+    "data_dir": "Data/Processed_ATP_WAP_2025",
+    "n_cases": 100,
+    "n_repeats": 20,
+    "case_indices": [
+      4196,
+      9025,
+      6428,
+      4467,
+      4301,
+      7447,
+      1477,
+      3122,
+      1579,
+      6839,
+      1741,
+      4765,
+      4123,
+      7854,
+      3551,
+      6643,
+      7996,
+      1919,
+      8482,
+      9270,
+      2170,
+      8836,
+      8543,
+      1221,
+      1542,
+      8008,
+      7629,
+      1817,
+      7271,
+      1344,
+      2303,
+      5297,
+      6725,
+      5016,
+      5207,
+      2771,
+      8679,
+      7494,
+      6145,
+      7376,
+      879,
+      8089,
+      5233,
+      3724,
+      4233,
+      4563,
+      6047,
+      649,
+      7255,
+      2177,
+      6232,
+      8633,
+      6542,
+      3512,
+      4263,
+      4440,
+      8843,
+      4893,
+      7012,
+      7119,
+      3841,
+      3537,
+      7368,
+      731,
+      6123,
+      6562,
+      7908,
+      818,
+      2644,
+      933,
+      9283,
+      7247,
+      419,
+      8177,
+      6697,
+      4181,
+      8200,
+      1862,
+      3482,
+      609,
+      897,
+      4772,
+      9297,
+      4179,
+      3000,
+      7733,
+      6037,
+      6485,
+      4502,
+      7458,
+      3937,
+      3389,
+      7134,
+      1246,
+      6585,
+      3168,
+      849,
+      5417,
+      4295,
+      7995
+    ],
+    "split": "test",
+    "device": "cuda",
+    "evaluated_at_utc": "2026-04-20T13:12:44.124980+00:00",
+    "seed": 42
+  },
+  "global_summary": {
+    "temperature": {
+      "coverage_95": 0.6933555006980896,
+      "mean_interval_width": 28.677911539248843,
+      "mean_abs_error": 11.865172386169434,
+      "mean_predictive_std": 8.483743667602539,
+      "unit": "K"
+    },
+    "pressure": {
+      "coverage_95": 0.5896345376968384,
+      "mean_interval_width": 9.611195248452495,
+      "mean_abs_error": 7.336445331573486,
+      "mean_predictive_std": 3.0670230388641357,
+      "unit": "hPa"
+    },
+    "humidity": {
+      "coverage_95": 0.28189370036125183,
+      "mean_interval_width": 0.9114962859509139,
+      "mean_abs_error": 0.4287322163581848,
+      "mean_predictive_std": 0.29719218611717224,
+      "unit": "g/kg"
+    }
+  },
+  "height_band_summary": {
+    "0-5km": {
+      "temperature": {
+        "coverage_95": 0.6692000031471252,
+        "mean_interval_width": 45.964815456390376,
+        "mean_abs_error": 23.256053924560547
+      },
+      "pressure": {
+        "coverage_95": 0.0803999975323677,
+        "mean_interval_width": 16.25164537902832,
+        "mean_abs_error": 34.13426208496094
+      },
+      "humidity": {
+        "coverage_95": 0.29120001196861267,
+        "mean_interval_width": 7.0034101767582415,
+        "mean_abs_error": 3.3790555000305176
+      }
+    },
+    "5-20km": {
+      "temperature": {
+        "coverage_95": 0.6669333577156067,
+        "mean_interval_width": 26.209955786844887,
+        "mean_abs_error": 10.769478797912598
+      },
+      "pressure": {
+        "coverage_95": 0.614133358001709,
+        "mean_interval_width": 27.987146634025578,
+        "mean_abs_error": 16.2374267578125
+      },
+      "humidity": {
+        "coverage_95": 0.41653332114219666,
+        "mean_interval_width": 0.8573865232984803,
+        "mean_abs_error": 0.4279788136482239
+      }
+    },
+    "20-60km": {
+      "temperature": {
+        "coverage_95": 0.7062188982963562,
+        "mean_interval_width": 27.44867812383471,
+        "mean_abs_error": 10.857236862182617
+      },
+      "pressure": {
+        "coverage_95": 0.6438308358192444,
+        "mean_interval_width": 1.9285703370973872,
+        "mean_abs_error": 0.6821218729019165
+      },
+      "humidity": {
+        "coverage_95": 0.23049750924110413,
+        "mean_interval_width": 0.17398576320837353,
+        "mean_abs_error": 0.06205775961279869
+      }
+    }
+  }
+}

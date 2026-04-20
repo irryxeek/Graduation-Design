@@ -1,0 +1,193 @@
+{
+  "metadata": {
+    "model_name": "mlp_mc_dropout",
+    "metric_space": "physical",
+    "model_path": "experiments/baseline_mlp_20260419T224628Z/mlp_best.pth",
+    "data_dir": "Data/Processed_ATP_WAP_2025",
+    "n_cases": 100,
+    "n_repeats": 20,
+    "case_indices": [
+      4196,
+      9025,
+      6428,
+      4467,
+      4301,
+      7447,
+      1477,
+      3122,
+      1579,
+      6839,
+      1741,
+      4765,
+      4123,
+      7854,
+      3551,
+      6643,
+      7996,
+      1919,
+      8482,
+      9270,
+      2170,
+      8836,
+      8543,
+      1221,
+      1542,
+      8008,
+      7629,
+      1817,
+      7271,
+      1344,
+      2303,
+      5297,
+      6725,
+      5016,
+      5207,
+      2771,
+      8679,
+      7494,
+      6145,
+      7376,
+      879,
+      8089,
+      5233,
+      3724,
+      4233,
+      4563,
+      6047,
+      649,
+      7255,
+      2177,
+      6232,
+      8633,
+      6542,
+      3512,
+      4263,
+      4440,
+      8843,
+      4893,
+      7012,
+      7119,
+      3841,
+      3537,
+      7368,
+      731,
+      6123,
+      6562,
+      7908,
+      818,
+      2644,
+      933,
+      9283,
+      7247,
+      419,
+      8177,
+      6697,
+      4181,
+      8200,
+      1862,
+      3482,
+      609,
+      897,
+      4772,
+      9297,
+      4179,
+      3000,
+      7733,
+      6037,
+      6485,
+      4502,
+      7458,
+      3937,
+      3389,
+      7134,
+      1246,
+      6585,
+      3168,
+      849,
+      5417,
+      4295,
+      7995
+    ],
+    "split": "test",
+    "device": "cuda",
+    "evaluated_at_utc": "2026-04-20T13:09:21.994516+00:00",
+    "seed": 42,
+    "smooth": false
+  },
+  "global_summary": {
+    "temperature": {
+      "coverage_95": 0.23119601607322693,
+      "mean_interval_width": 4.405157296152209,
+      "mean_abs_error": 7.850828647613525,
+      "mean_predictive_std": 1.2808895111083984,
+      "unit": "K"
+    },
+    "pressure": {
+      "coverage_95": 0.695182740688324,
+      "mean_interval_width": 31.982228397348035,
+      "mean_abs_error": 7.339653015136719,
+      "mean_predictive_std": 9.206290245056152,
+      "unit": "hPa"
+    },
+    "humidity": {
+      "coverage_95": 0.3766445219516754,
+      "mean_interval_width": 0.15324225383522946,
+      "mean_abs_error": 0.30735769867897034,
+      "mean_predictive_std": 0.044525787234306335,
+      "unit": "g/kg"
+    }
+  },
+  "height_band_summary": {
+    "0-5km": {
+      "temperature": {
+        "coverage_95": 0.15160000324249268,
+        "mean_interval_width": 4.455082422485351,
+        "mean_abs_error": 12.227846145629883
+      },
+      "pressure": {
+        "coverage_95": 0.9660000205039978,
+        "mean_interval_width": 236.87894346527094,
+        "mean_abs_error": 41.43168640136719
+      },
+      "humidity": {
+        "coverage_95": 0.2815999984741211,
+        "mean_interval_width": 0.9249963638518748,
+        "mean_abs_error": 1.639666199684143
+      }
+    },
+    "5-20km": {
+      "temperature": {
+        "coverage_95": 0.2762666642665863,
+        "mean_interval_width": 3.7886881778971353,
+        "mean_abs_error": 6.362986087799072
+      },
+      "pressure": {
+        "coverage_95": 0.7862666845321655,
+        "mean_interval_width": 47.6112586177953,
+        "mean_abs_error": 14.435028076171875
+      },
+      "humidity": {
+        "coverage_95": 0.15960000455379486,
+        "mean_interval_width": 0.16725178714940941,
+        "mean_abs_error": 0.4532620310783386
+      }
+    },
+    "20-60km": {
+      "temperature": {
+        "coverage_95": 0.22427861392498016,
+        "mean_interval_width": 4.628973493718389,
+        "mean_abs_error": 7.861588954925537
+      },
+      "pressure": {
+        "coverage_95": 0.6275124549865723,
+        "mean_interval_width": 0.6658346499270521,
+        "mean_abs_error": 0.4518227279186249
+      },
+      "humidity": {
+        "coverage_95": 0.46945273876190186,
+        "mean_interval_width": 0.05202549886518153,
+        "mean_abs_error": 0.08720575273036957
+      }
+    }
+  }
+}
