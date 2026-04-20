@@ -1,0 +1,196 @@
+{
+  "metadata": {
+    "sampler": "ddpm",
+    "metric_space": "physical",
+    "diffusion_model_path": "experiments/main_rerun_longer_loss_monitor_20260420T181959Z/enhanced_ro_diffusion_best.pth",
+    "mlp_model_path": "experiments/baseline_mlp_20260419T224628Z/mlp_best.pth",
+    "data_dir": "Data/Processed_ATP_WAP_2025",
+    "n_cases": 100,
+    "n_repeats": 20,
+    "case_indices": [
+      4196,
+      9025,
+      6428,
+      4467,
+      4301,
+      7447,
+      1477,
+      3122,
+      1579,
+      6839,
+      1741,
+      4765,
+      4123,
+      7854,
+      3551,
+      6643,
+      7996,
+      1919,
+      8482,
+      9270,
+      2170,
+      8836,
+      8543,
+      1221,
+      1542,
+      8008,
+      7629,
+      1817,
+      7271,
+      1344,
+      2303,
+      5297,
+      6725,
+      5016,
+      5207,
+      2771,
+      8679,
+      7494,
+      6145,
+      7376,
+      879,
+      8089,
+      5233,
+      3724,
+      4233,
+      4563,
+      6047,
+      649,
+      7255,
+      2177,
+      6232,
+      8633,
+      6542,
+      3512,
+      4263,
+      4440,
+      8843,
+      4893,
+      7012,
+      7119,
+      3841,
+      3537,
+      7368,
+      731,
+      6123,
+      6562,
+      7908,
+      818,
+      2644,
+      933,
+      9283,
+      7247,
+      419,
+      8177,
+      6697,
+      4181,
+      8200,
+      1862,
+      3482,
+      609,
+      897,
+      4772,
+      9297,
+      4179,
+      3000,
+      7733,
+      6037,
+      6485,
+      4502,
+      7458,
+      3937,
+      3389,
+      7134,
+      1246,
+      6585,
+      3168,
+      849,
+      5417,
+      4295,
+      7995
+    ],
+    "split": "test",
+    "device": "cuda",
+    "evaluated_at_utc": "2026-04-20T22:11:28.555831+00:00",
+    "seed": 42,
+    "point_estimator": "mlp",
+    "interval_center": "mlp",
+    "interval_width_source": "diffusion_shift"
+  },
+  "global_summary": {
+    "temperature": {
+      "coverage_95": 0.8031229376792908,
+      "mean_interval_width": 23.167702042227955,
+      "mean_abs_error": 7.853462219238281,
+      "mean_predictive_std": 6.769303321838379,
+      "unit": "K"
+    },
+    "pressure": {
+      "coverage_95": 0.6950498223304749,
+      "mean_interval_width": 9.61812003247806,
+      "mean_abs_error": 7.396734714508057,
+      "mean_predictive_std": 3.059978723526001,
+      "unit": "hPa"
+    },
+    "humidity": {
+      "coverage_95": 0.11707641184329987,
+      "mean_interval_width": 0.5200753434087096,
+      "mean_abs_error": 0.30698421597480774,
+      "mean_predictive_std": 0.1627475768327713,
+      "unit": "g/kg"
+    }
+  },
+  "height_band_summary": {
+    "0-5km": {
+      "temperature": {
+        "coverage_95": 0.8327999711036682,
+        "mean_interval_width": 33.27582951103209,
+        "mean_abs_error": 12.230478286743164
+      },
+      "pressure": {
+        "coverage_95": 0.09000000357627869,
+        "mean_interval_width": 16.661255294189452,
+        "mean_abs_error": 42.04798889160156
+      },
+      "humidity": {
+        "coverage_95": 0.5568000078201294,
+        "mean_interval_width": 4.725710847078261,
+        "mean_abs_error": 1.6377729177474976
+      }
+    },
+    "5-20km": {
+      "temperature": {
+        "coverage_95": 0.8458666801452637,
+        "mean_interval_width": 21.23907268185933,
+        "mean_abs_error": 6.358382701873779
+      },
+      "pressure": {
+        "coverage_95": 0.5770666599273682,
+        "mean_interval_width": 27.900408564732867,
+        "mean_abs_error": 14.462848663330078
+      },
+      "humidity": {
+        "coverage_95": 0.14826667308807373,
+        "mean_interval_width": 0.3132985005188924,
+        "mean_abs_error": 0.45255231857299805
+      }
+    },
+    "20-60km": {
+      "temperature": {
+        "coverage_95": 0.7834826111793518,
+        "mean_interval_width": 22.630110078583897,
+        "mean_abs_error": 7.866922378540039
+      },
+      "pressure": {
+        "coverage_95": 0.8143283724784851,
+        "mean_interval_width": 1.9203587316726123,
+        "mean_abs_error": 0.45026737451553345
+      },
+      "humidity": {
+        "coverage_95": 0.05074626952409744,
+        "mean_interval_width": 0.07414188880670715,
+        "mean_abs_error": 0.08714673668146133
+      }
+    }
+  }
+}
