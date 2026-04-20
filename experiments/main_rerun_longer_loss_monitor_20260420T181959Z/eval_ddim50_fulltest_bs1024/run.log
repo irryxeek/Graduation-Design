@@ -1,0 +1,37 @@
+使用测试集进行评估
+评估数据: X=(9618, 301), Y=(9618, 3, 301)
+模型加载成功: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/enhanced_ro_diffusion_best.pth
+
+开始批量评估 (DDIM, 9618 样本, batch_size=1024, metric_space=standardized)...
+  0%|          | 0/10 [00:00<?, ?it/s] 10%|█         | 1/10 [00:06<00:59,  6.63s/it] 20%|██        | 2/10 [00:12<00:50,  6.30s/it] 30%|███       | 3/10 [00:18<00:43,  6.20s/it] 40%|████      | 4/10 [00:24<00:36,  6.15s/it] 50%|█████     | 5/10 [00:30<00:30,  6.13s/it] 60%|██████    | 6/10 [00:37<00:24,  6.13s/it] 70%|███████   | 7/10 [00:43<00:18,  6.11s/it] 80%|████████  | 8/10 [00:49<00:12,  6.11s/it] 90%|█████████ | 9/10 [00:55<00:06,  6.12s/it]100%|██████████| 10/10 [00:57<00:00,  4.99s/it]100%|██████████| 10/10 [00:57<00:00,  5.79s/it]
+
+============================================================
+           综合评估报告 (Evaluation Report)
+============================================================
+
+  [TEMPERATURE]  (N=9618)
+    RMSE  : 0.6745 ± 0.3539 K
+            (best=0.2093, worst=2.9912)
+    Bias  : 0.0041 ± 0.5089 K
+    CC    : 0.7787 (min=-0.7709, max=0.9802)
+
+  [PRESSURE]  (N=9618)
+    RMSE  : 0.0715 ± 0.0457 hPa
+            (best=0.0241, worst=0.4107)
+    Bias  : 0.0007 ± 0.0628 hPa
+    CC    : 0.9992 (min=0.9953, max=1.0000)
+
+  [HUMIDITY]  (N=9618)
+    RMSE  : 0.7876 ± 0.5163 g/kg
+            (best=0.1802, worst=5.8651)
+    Bias  : 0.0429 ± 0.3564 g/kg
+    CC    : 0.6794 (min=-0.8810, max=0.9789)
+
+============================================================
+评估报告已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddim50_fulltest_bs1024/evaluation_report.json
+已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddim50_fulltest_bs1024/temperature_comparison.png
+已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddim50_fulltest_bs1024/pressure_comparison.png
+已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddim50_fulltest_bs1024/humidity_comparison.png
+已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddim50_fulltest_bs1024/rmse_bias_profile.png
+
+评估完成! 结果保存在: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddim50_fulltest_bs1024

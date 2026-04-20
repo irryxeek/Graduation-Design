@@ -1,0 +1,140 @@
+{
+  "summary": {
+    "temperature": {
+      "count": 9618,
+      "rmse_mean": 0.6745355359762194,
+      "rmse_std": 0.3538544220826362,
+      "rmse_min": 0.20929929614067078,
+      "rmse_max": 2.9911820888519287,
+      "bias_mean": 0.004112257460241438,
+      "bias_std": 0.5088770287905613,
+      "cc_mean": 0.7786724625154566,
+      "cc_min": -0.7709067342513817,
+      "cc_max": 0.9802225265016116
+    },
+    "pressure": {
+      "count": 9618,
+      "rmse_mean": 0.07153703220983408,
+      "rmse_std": 0.04569149682643682,
+      "rmse_min": 0.024136168882250786,
+      "rmse_max": 0.4106852114200592,
+      "bias_mean": 0.0007017233848905206,
+      "bias_std": 0.06283765851674687,
+      "cc_mean": 0.9991583024144655,
+      "cc_min": 0.9952548725538999,
+      "cc_max": 0.999981825674466
+    },
+    "humidity": {
+      "count": 9618,
+      "rmse_mean": 0.7875887468522292,
+      "rmse_std": 0.5162815839809813,
+      "rmse_min": 0.18023119866847992,
+      "rmse_max": 5.8651251792907715,
+      "bias_mean": 0.04291915261547046,
+      "bias_std": 0.356350110690118,
+      "cc_mean": 0.6794353898725046,
+      "cc_min": -0.8809914713484986,
+      "cc_max": 0.9789485697040607
+    }
+  },
+  "n_samples": 9618,
+  "metadata": {
+    "sampler": "ddim",
+    "ddim_steps": 50,
+    "ddim_eta": 0.0,
+    "batch_size": 1024,
+    "model_path": "experiments/main_rerun_longer_loss_monitor_20260420T181959Z/enhanced_ro_diffusion_best.pth",
+    "model_type": "enhanced",
+    "out_channels": 3,
+    "data_dir": "Data/Processed_ATP_WAP_2025",
+    "metric_space": "standardized",
+    "smooth": true,
+    "pressure_log_transformed": true,
+    "height_bands": [
+      "0-5km",
+      "5-20km",
+      "20-60km"
+    ],
+    "condition_input_space": "legacy_train_split_restandardized",
+    "prediction_calibration": "legacy_train_split_mean_std",
+    "device": "cuda",
+    "evaluated_at_utc": "2026-04-20T19:38:50.540377+00:00",
+    "seed": 42
+  },
+  "height_band_summary": {
+    "0-5km": {
+      "temperature": {
+        "rmse": 1.2092063426971436,
+        "bias": -0.15039250254631042,
+        "cc": -0.11697324997007898,
+        "n_values": 240450,
+        "n_levels": 25
+      },
+      "pressure": {
+        "rmse": 0.018601026386022568,
+        "bias": -0.0037315592635422945,
+        "cc": 0.9707127177075958,
+        "n_values": 240450,
+        "n_levels": 25
+      },
+      "humidity": {
+        "rmse": 2.5744681358337402,
+        "bias": 0.0320744551718235,
+        "cc": 0.17766380357544195,
+        "n_values": 240450,
+        "n_levels": 25
+      }
+    },
+    "5-20km": {
+      "temperature": {
+        "rmse": 0.6907621622085571,
+        "bias": 0.01790725439786911,
+        "cc": 0.5833402983155977,
+        "n_values": 721350,
+        "n_levels": 75
+      },
+      "pressure": {
+        "rmse": 0.0415588840842247,
+        "bias": -0.0014931593323126435,
+        "cc": 0.9877127683160111,
+        "n_values": 721350,
+        "n_levels": 75
+      },
+      "humidity": {
+        "rmse": 0.9027554988861084,
+        "bias": 0.09543473273515701,
+        "cc": 0.05553990130447792,
+        "n_values": 721350,
+        "n_levels": 75
+      }
+    },
+    "20-60km": {
+      "temperature": {
+        "rmse": 0.7134201526641846,
+        "bias": 0.01818188652396202,
+        "cc": 0.615246918609907,
+        "n_values": 1933218,
+        "n_levels": 201
+      },
+      "pressure": {
+        "rmse": 0.10051106661558151,
+        "bias": 0.0020721128676086664,
+        "cc": 0.9876404624232706,
+        "n_values": 1933218,
+        "n_levels": 201
+      },
+      "humidity": {
+        "rmse": 0.4467681050300598,
+        "bias": 0.024672625586390495,
+        "cc": 0.04629937171119075,
+        "n_values": 1933218,
+        "n_levels": 201
+      }
+    }
+  },
+  "units": {
+    "temperature": "standardized",
+    "pressure": "standardized",
+    "humidity": "standardized"
+  }
+}

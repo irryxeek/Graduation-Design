@@ -1,0 +1,37 @@
+使用测试集进行评估
+评估数据: X=(9618, 301), Y=(9618, 3, 301)
+模型加载成功: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/enhanced_ro_diffusion_best.pth
+
+开始批量评估 (DDPM, 9618 样本, batch_size=512, metric_space=physical)...
+  0%|          | 0/19 [00:00<?, ?it/s]  5%|▌         | 1/19 [00:35<10:47, 35.99s/it] 11%|█         | 2/19 [01:11<10:07, 35.76s/it] 16%|█▌        | 3/19 [01:47<09:30, 35.67s/it] 21%|██        | 4/19 [02:22<08:54, 35.62s/it] 26%|██▋       | 5/19 [02:58<08:18, 35.62s/it] 32%|███▏      | 6/19 [03:33<07:42, 35.59s/it] 37%|███▋      | 7/19 [04:09<07:06, 35.56s/it] 42%|████▏     | 8/19 [04:44<06:31, 35.56s/it] 47%|████▋     | 9/19 [05:20<05:55, 35.56s/it] 53%|█████▎    | 10/19 [05:55<05:19, 35.54s/it] 58%|█████▊    | 11/19 [06:31<04:44, 35.53s/it] 63%|██████▎   | 12/19 [07:07<04:08, 35.53s/it] 68%|██████▊   | 13/19 [07:42<03:33, 35.54s/it] 74%|███████▎  | 14/19 [08:18<02:57, 35.52s/it] 79%|███████▉  | 15/19 [08:53<02:22, 35.53s/it] 84%|████████▍ | 16/19 [09:29<01:46, 35.52s/it] 89%|████████▉ | 17/19 [10:04<01:11, 35.54s/it] 95%|█████████▍| 18/19 [10:40<00:35, 35.53s/it]100%|██████████| 19/19 [11:08<00:00, 33.38s/it]100%|██████████| 19/19 [11:08<00:00, 35.19s/it]
+
+============================================================
+           综合评估报告 (Evaluation Report)
+============================================================
+
+  [TEMPERATURE]  (N=9618)
+    RMSE  : 18.2335 ± 12.3405 K
+            (best=3.9105, worst=278.6145)
+    Bias  : -1.1281 ± 16.3513 K
+    CC    : 0.7445 (min=-0.8719, max=0.9906)
+
+  [PRESSURE]  (N=9618)
+    RMSE  : 14.2358 ± 9.2060 hPa
+            (best=1.3151, worst=90.3813)
+    Bias  : 4.4691 ± 6.5697 hPa
+    CC    : 0.9993 (min=0.9751, max=1.0000)
+
+  [HUMIDITY]  (N=9618)
+    RMSE  : 1.3053 ± 2.4861 g/kg
+            (best=0.0888, worst=86.0998)
+    Bias  : 0.0247 ± 1.6633 g/kg
+    CC    : 0.8397 (min=-0.2926, max=0.9989)
+
+============================================================
+评估报告已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddpm_fulltest_physical_bs512/evaluation_report.json
+已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddpm_fulltest_physical_bs512/temperature_comparison.png
+已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddpm_fulltest_physical_bs512/pressure_comparison.png
+已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddpm_fulltest_physical_bs512/humidity_comparison.png
+已保存: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddpm_fulltest_physical_bs512/rmse_bias_profile.png
+
+评估完成! 结果保存在: experiments/main_rerun_longer_loss_monitor_20260420T181959Z/eval_ddpm_fulltest_physical_bs512
