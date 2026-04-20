@@ -77,8 +77,6 @@ def parse_args():
     )
     train.add_argument("--humidity_grad_weight", type=float, default=0.05)
     train.add_argument("--humidity_cc_weight", type=float, default=0.0)
-    train.add_argument("--residual_prior_model", choices=["mlp", "cnn"], default=None)
-    train.add_argument("--residual_prior_path", type=str, default=None)
 
     evaluate = parser.add_argument_group("评估")
     evaluate.add_argument("--model_path", type=str, default=None)
@@ -177,8 +175,6 @@ def stage_train(args):
         monitor_target=args.monitor_target,
         humidity_grad_weight=args.humidity_grad_weight,
         humidity_cc_weight=args.humidity_cc_weight,
-        residual_prior_model=args.residual_prior_model,
-        residual_prior_path=args.residual_prior_path,
     )
     trainer.train()
 
@@ -228,8 +224,6 @@ def stage_evaluate(args):
         no_smooth=args.no_smooth,
         height_bands=args.height_bands,
         pressure_log_transformed=args.pressure_log_transformed,
-        residual_prior_model=args.residual_prior_model,
-        residual_prior_path=args.residual_prior_path,
         residual_mode=args.residual_mode,
     )
     evaluate_main(eval_args)

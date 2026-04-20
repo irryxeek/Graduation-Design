@@ -1,4 +1,4 @@
-"""最小可答辩版扩散不确定性实验。"""
+"""运行 MLP 中心 + 扩散平移区间的不确定性评估。"""
 
 from __future__ import annotations
 
@@ -19,28 +19,39 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from ro_retrieval.config import DEVICE, PAPER_PROCESSED_DIR, PROJECT_ROOT, SAVGOL_POLYORDER, SAVGOL_WINDOW, TIMESTEPS
+from ro_retrieval.model.baselines import load_baseline_checkpoint
 from ro_retrieval.model.diffusion import DiffusionSchedule, ddpm_sample
 from ro_retrieval.model.unet import EnhancedConditionalUNet1D
 from ro_retrieval.stats_utils import canonicalize_stats
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="运行最小不确定性补实验")
+    parser = argparse.ArgumentParser(description="运行 MLP 中心 + 扩散平移区间的不确定性评估")
     parser.add_argument(
-        "--model_path",
+        "--diffusion_model_path",
         type=str,
         default=os.path.join(
             PROJECT_ROOT,
             "experiments",
-            "main_rerun_current_standard_20260419T121928Z",
+            "main_rerun_longer_loss_monitor_20260420T181959Z",
             "enhanced_ro_diffusion_best.pth",
+        ),
+    )
+    parser.add_argument(
+        "--mlp_model_path",
+        type=str,
+        default=os.path.join(
+            PROJECT_ROOT,
+            "experiments",
+            "baseline_mlp_20260419T224628Z",
+            "mlp_best.pth",
         ),
     )
     parser.add_argument("--data_dir", type=str, default=PAPER_PROCESSED_DIR)
     parser.add_argument("--split", choices=["val", "test"], default="test")
     parser.add_argument("--out_channels", type=int, default=3)
-    parser.add_argument("--n_cases", type=int, default=5)
-    parser.add_argument("--n_repeats", type=int, default=5)
+    parser.add_argument("--n_cases", type=int, default=100)
+    parser.add_argument("--n_repeats", type=int, default=20)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--save_root", type=str, default=os.path.join(PROJECT_ROOT, "experiments"))
     parser.add_argument("--case_indices", type=str, default="")
@@ -93,7 +104,7 @@ def _maybe_smooth_batch(preds, enabled):
     return preds
 
 
-def _build_model(model_path, out_channels):
+def _build_diffusion_model(model_path, out_channels):
     model = EnhancedConditionalUNet1D(
         in_channels=out_channels,
         cond_channels=1,
@@ -135,7 +146,7 @@ def _compute_band_metrics(mean_preds, lower, upper, truths, heights, band_specs,
 
 def _write_summary_md(path, summary):
     lines = [
-        "# 最小不确定性补实验摘要",
+        "# Hybrid Uncertainty 摘要",
         "",
         f"- 样本数: `{summary['metadata']['n_cases']}`",
         f"- 每样本重复采样次数: `{summary['metadata']['n_repeats']}`",
@@ -175,14 +186,16 @@ def _write_summary_md(path, summary):
 def main():
     args = parse_args()
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    save_dir = os.path.join(args.save_root, f"uncertainty_probe_{args.split}_{timestamp}")
+    save_dir = os.path.join(args.save_root, f"hybrid_uncertainty_{args.split}_{timestamp}")
     os.makedirs(save_dir, exist_ok=True)
 
     print("加载数据...")
-    test_x, test_y, _train_x, _train_y = _load_arrays(args.data_dir, args.split)
+    test_x, test_y, train_x, train_y = _load_arrays(args.data_dir, args.split)
     out_channels = min(args.out_channels, test_y.shape[1])
     test_y = test_y[:, :out_channels, :]
+    train_y = train_y[:, :out_channels, :]
     var_names = ["temperature", "pressure", "humidity"][:out_channels]
+    units = {"temperature": "K", "pressure": "hPa", "humidity": "g/kg"}
 
     physical_stats = _load_stats(args.data_dir)
     heights = np.asarray(
@@ -192,12 +205,9 @@ def main():
     pressure_log_transformed = bool(physical_stats.get("pressure_log_transformed", False))
     physical_y_mean = np.asarray(physical_stats["y_mean"], dtype=np.float32)[:out_channels]
     physical_y_std = np.asarray(physical_stats["y_std"], dtype=np.float32)[:out_channels]
-    x_mean = np.mean(_train_x, axis=0)
-    x_std = np.std(_train_x, axis=0) + 1e-6
-    train_y = np.asarray(_train_y, dtype=np.float32)
-    if train_y.ndim == 2:
-        train_y = train_y[:, np.newaxis, :]
-    train_y = train_y[:, :out_channels, :]
+
+    x_mean = np.mean(train_x, axis=0)
+    x_std = np.std(train_x, axis=0) + 1e-6
     legacy_y_mean = np.mean(train_y, axis=0)
     legacy_y_std = np.std(train_y, axis=0) + 1e-6
 
@@ -206,6 +216,7 @@ def main():
     x_batch = np.asarray(test_x[case_indices], dtype=np.float32)
     cond_input = (x_batch - x_mean) / x_std
     cond = torch.tensor(cond_input, dtype=torch.float32, device=DEVICE).unsqueeze(1)
+    mlp_input = torch.tensor(x_batch, dtype=torch.float32, device=DEVICE).unsqueeze(1)
     truths_std = np.asarray(test_y[case_indices], dtype=np.float32)
     truths = _restore_physical_targets(
         truths_std,
@@ -215,21 +226,42 @@ def main():
         pressure_log_transformed,
     )
 
-    print(f"加载模型: {args.model_path}")
-    model = _build_model(args.model_path, out_channels=out_channels)
+    print(f"加载 MLP 模型: {args.mlp_model_path}")
+    mlp_model = load_baseline_checkpoint(
+        name="mlp",
+        checkpoint_path=args.mlp_model_path,
+        input_length=x_batch.shape[-1],
+        out_channels=out_channels,
+        device=DEVICE,
+    )
+    with torch.no_grad():
+        mlp_preds_std = mlp_model(mlp_input).cpu().numpy()
+    mlp_preds = _restore_physical_targets(
+        mlp_preds_std,
+        physical_y_mean,
+        physical_y_std,
+        out_channels,
+        pressure_log_transformed,
+    )
+    mlp_preds = _maybe_smooth_batch(mlp_preds, args.smooth)
+
+    print(f"加载扩散模型: {args.diffusion_model_path}")
+    diffusion_model = _build_diffusion_model(args.diffusion_model_path, out_channels=out_channels)
     schedule = DiffusionSchedule(TIMESTEPS, device=DEVICE)
 
-    all_preds = []
+    all_diff_preds = []
     for repeat_idx in range(args.n_repeats):
         seed = args.seed + repeat_idx
         np.random.seed(seed)
         torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
         print(f"[repeat {repeat_idx + 1}/{args.n_repeats}] seed={seed}")
         with torch.no_grad():
             gen = ddpm_sample(
-                model,
+                diffusion_model,
                 cond,
-                shape=(len(case_indices), out_channels, 301),
+                shape=(len(case_indices), out_channels, x_batch.shape[-1]),
                 schedule=schedule,
                 device=DEVICE,
             )
@@ -243,16 +275,17 @@ def main():
             pressure_log_transformed,
         )
         preds_phys = _maybe_smooth_batch(preds_phys, args.smooth)
-        all_preds.append(preds_phys)
+        all_diff_preds.append(preds_phys)
 
-    all_preds = np.asarray(all_preds, dtype=np.float32)  # (R, N, C, L)
-    mean_preds = np.mean(all_preds, axis=0)
-    std_preds = np.std(all_preds, axis=0)
-    lower = np.percentile(all_preds, 2.5, axis=0)
-    upper = np.percentile(all_preds, 97.5, axis=0)
+    all_diff_preds = np.asarray(all_diff_preds, dtype=np.float32)
+    diff_mean = np.mean(all_diff_preds, axis=0)
+    shift = mlp_preds - diff_mean
+    std_preds = np.std(all_diff_preds, axis=0)
+    lower = np.percentile(all_diff_preds, 2.5, axis=0) + shift
+    upper = np.percentile(all_diff_preds, 97.5, axis=0) + shift
+    mean_preds = mlp_preds
 
     global_summary = {}
-    units = {"temperature": "K", "pressure": "hPa", "humidity": "g/kg"}
     for var_idx, var_name in enumerate(var_names):
         truth = truths[:, var_idx, :]
         lo = lower[:, var_idx, :]
@@ -278,7 +311,6 @@ def main():
         var_names=var_names,
     )
 
-    # 平均不确定性剖面
     fig, axes = plt.subplots(1, out_channels, figsize=(5 * out_channels, 6), sharey=True)
     if out_channels == 1:
         axes = [axes]
@@ -294,7 +326,6 @@ def main():
     plt.savefig(os.path.join(save_dir, "predictive_std_profile.png"), dpi=150)
     plt.close()
 
-    # 典型样本图
     max_plot_cases = min(3, len(case_indices))
     for local_idx in range(max_plot_cases):
         fig, axes = plt.subplots(1, out_channels, figsize=(5 * out_channels, 6), sharey=True)
@@ -336,9 +367,12 @@ def main():
         "metadata": {
             "sampler": "ddpm",
             "metric_space": "physical",
-            "model_path": os.path.relpath(args.model_path, PROJECT_ROOT)
-            if os.path.isabs(args.model_path)
-            else args.model_path,
+            "diffusion_model_path": os.path.relpath(args.diffusion_model_path, PROJECT_ROOT)
+            if os.path.isabs(args.diffusion_model_path)
+            else args.diffusion_model_path,
+            "mlp_model_path": os.path.relpath(args.mlp_model_path, PROJECT_ROOT)
+            if os.path.isabs(args.mlp_model_path)
+            else args.mlp_model_path,
             "data_dir": os.path.relpath(args.data_dir, PROJECT_ROOT)
             if os.path.isabs(args.data_dir)
             else args.data_dir,
@@ -349,9 +383,9 @@ def main():
             "device": str(DEVICE),
             "evaluated_at_utc": datetime.now(timezone.utc).isoformat(),
             "seed": args.seed,
-            "point_estimator": "diffusion",
-            "interval_center": "diffusion",
-            "interval_width_source": "diffusion",
+            "point_estimator": "mlp",
+            "interval_center": "mlp",
+            "interval_width_source": "diffusion_shift",
         },
         "global_summary": global_summary,
         "height_band_summary": height_band_summary,
@@ -364,7 +398,7 @@ def main():
     summary_md_path = os.path.join(save_dir, "summary.md")
     _write_summary_md(summary_md_path, summary)
 
-    print(f"\n不确定性补实验完成: {save_dir}")
+    print(f"\nHybrid uncertainty 实验完成: {save_dir}")
     print(f"summary.json: {summary_json_path}")
     print(f"summary.md: {summary_md_path}")
 
