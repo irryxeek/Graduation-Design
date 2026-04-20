@@ -44,7 +44,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--save_root", type=str, default=os.path.join(PROJECT_ROOT, "experiments"))
     parser.add_argument("--case_indices", type=str, default="")
-    parser.add_argument("--smooth", action="store_true", default=True)
+    parser.add_argument("--smooth", action="store_true", default=False)
     return parser.parse_args()
 
 
