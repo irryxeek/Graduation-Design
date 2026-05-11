@@ -16,6 +16,7 @@ import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import pandas as pd
 from scipy.signal import savgol_filter
 
 # ─────────────────── 中文字体 & 绘图风格 ───────────────────
@@ -35,7 +36,7 @@ from ro_retrieval.config import (
     DEVICE, TIMESTEPS,
     SAVGOL_WINDOW, SAVGOL_POLYORDER,
 )
-from ro_retrieval.model.unet import ConditionalUNet1D, EnhancedConditionalUNet1D
+from ro_retrieval.model.unet import EnhancedConditionalUNet1D
 from ro_retrieval.model.diffusion import DiffusionSchedule, ddpm_sample, ddim_sample
 from ro_retrieval.evaluation.metrics import evaluate_profile
 from ro_retrieval.stats_utils import canonicalize_stats, load_stats_from_dir
@@ -64,9 +65,9 @@ COLORS = {
 }
 
 VAR_META = [
-    {'name': '温度', 'unit': 'K',    'color': COLORS['temp_color'], 'icon': '🌡'},
-    {'name': '气压', 'unit': 'hPa',  'color': COLORS['pres_color'], 'icon': '📊'},
-    {'name': '湿度', 'unit': 'g/kg', 'color': COLORS['hum_color'],  'icon': '💧'},
+    {'name': '温度', 'unit': 'K',    'color': COLORS['temp_color'], 'icon': ''},
+    {'name': '气压', 'unit': 'hPa',  'color': COLORS['pres_color'], 'icon': ''},
+    {'name': '湿度', 'unit': 'g/kg', 'color': COLORS['hum_color'],  'icon': ''},
 ]
 
 DATASET_PREFERENCE = [
@@ -81,7 +82,7 @@ DATASET_PREFERENCE = [
 # ─────────────────── 页面配置 ───────────────────
 st.set_page_config(
     page_title="GNSS-RO 大气剖面反演系统",
-    page_icon="🛰️",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -89,130 +90,191 @@ st.set_page_config(
 # ─────────────────── 自定义样式 ───────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root {
+    --bg: #0b1017;
+    --panel: #101821;
+    --panel-2: #16212c;
+    --line: #253442;
+    --line-strong: #3d5363;
+    --text: #e6edf3;
+    --muted: #9aa8b4;
+    --faint: #657481;
+    --cyan: #25c2b5;
+    --blue: #5aa6ff;
+    --amber: #e4a13b;
+    --green: #4fc17b;
+    --red: #e35d6a;
+}
 
 /* ── 全局基底 ── */
 .stApp {
-    background: linear-gradient(165deg, #0a0e1a 0%, #0f1729 40%, #111d35 100%);
-    color: #e2e8f0;
-    font-family: 'Noto Sans SC', sans-serif;
+    background:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(145deg, #0b1017 0%, #0f1820 46%, #121a22 100%);
+    background-size: 44px 44px, 44px 44px, 100% 100%;
+    color: var(--text);
+    font-family: "Microsoft YaHei", "DengXian", "Segoe UI", sans-serif;
+}
+.block-container {
+    padding-top: 1.4rem;
+    padding-bottom: 2rem;
+    max-width: 1440px;
 }
 
 /* ── 侧栏 ── */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0d1321 0%, #111827 100%);
-    border-right: 1px solid #1e293b;
+    background: linear-gradient(180deg, #0b1118 0%, #101820 100%);
+    border-right: 1px solid var(--line);
+}
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 1.25rem;
 }
 section[data-testid="stSidebar"] .stMarkdown p,
 section[data-testid="stSidebar"] .stMarkdown span,
 section[data-testid="stSidebar"] label {
-    color: #cbd5e1 !important;
-    font-family: 'Noto Sans SC', sans-serif;
+    color: #cbd5df !important;
+    font-family: "Microsoft YaHei", "DengXian", "Segoe UI", sans-serif;
 }
 section[data-testid="stSidebar"] .stSelectbox > div > div,
-section[data-testid="stSidebar"] .stRadio > div {
-    background-color: #1a2035;
-    border-color: #2a3555;
+section[data-testid="stSidebar"] .stRadio > div,
+section[data-testid="stSidebar"] .stSlider,
+section[data-testid="stSidebar"] .stCheckbox {
+    background-color: rgba(16, 24, 33, 0.72);
+    border-color: var(--line);
     border-radius: 8px;
 }
 
 /* ── 主标题区 ── */
+.hero-shell {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--cyan);
+    border-radius: 8px;
+    padding: 1rem 1.1rem 0.95rem 1.1rem;
+    margin-bottom: 1rem;
+    background:
+        linear-gradient(90deg, rgba(37,194,181,0.12), rgba(90,166,255,0.045) 38%, rgba(16,24,33,0.86)),
+        rgba(16,24,33,0.88);
+}
+.hero-kicker {
+    color: var(--cyan);
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.28rem;
+}
 .hero-title {
-    font-size: 2rem;
+    font-size: 1.78rem;
+    line-height: 1.18;
     font-weight: 700;
-    background: linear-gradient(135deg, #60a5fa, #06b6d4, #14b8a6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: -0.02em;
-    margin-bottom: 0.2rem;
-    font-family: 'Noto Sans SC', sans-serif;
+    color: var(--text);
+    letter-spacing: 0;
+    margin-bottom: 0.38rem;
 }
 .hero-subtitle {
-    font-size: 0.95rem;
-    color: #64748b;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-    margin-bottom: 1.5rem;
-    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.94rem;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0;
+}
+.hero-chips {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.85rem;
+}
+.hero-chip {
+    border: 1px solid rgba(154,168,180,0.22);
+    border-radius: 999px;
+    color: #cfd8e1;
+    padding: 0.22rem 0.58rem;
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 0.76rem;
+    background: rgba(11,16,23,0.46);
 }
 
 /* ── 卡片 ── */
 .card {
-    background: linear-gradient(145deg, #111827 0%, #0f1524 100%);
-    border: 1px solid #1e293b;
-    border-radius: 12px;
-    padding: 1.25rem;
+    background: rgba(16, 24, 33, 0.88);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1.05rem;
     margin-bottom: 1rem;
-    transition: border-color 0.3s ease;
+    transition: border-color 0.2s ease, background 0.2s ease;
 }
-.card:hover { border-color: #2a3a5c; }
-
+.card:hover {
+    border-color: var(--line-strong);
+    background: rgba(18, 29, 39, 0.94);
+}
 .card-header {
     font-size: 0.75rem;
-    font-weight: 500;
-    color: #64748b;
+    font-weight: 600;
+    color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin-bottom: 0.75rem;
-    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.7rem;
+    font-family: "Consolas", "Cascadia Mono", monospace;
 }
 
 /* ── 指标卡片 ── */
 .metric-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.75rem;
 }
 .metric-card {
-    background: #0d1321;
-    border: 1px solid #1e293b;
-    border-radius: 10px;
-    padding: 1rem;
+    background: linear-gradient(180deg, rgba(16,24,33,0.96), rgba(12,18,25,0.96));
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.95rem;
     text-align: center;
-    transition: all 0.3s ease;
+    min-height: 6.25rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
 }
 .metric-card:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.08);
+    border-color: rgba(37,194,181,0.46);
+    transform: translateY(-1px);
 }
 .metric-label {
-    font-size: 0.7rem;
-    color: #64748b;
+    font-size: 0.68rem;
+    color: var(--faint);
     text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin-bottom: 0.35rem;
-    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.32rem;
+    font-family: "Consolas", "Cascadia Mono", monospace;
 }
 .metric-value {
-    font-size: 1.6rem;
+    font-size: clamp(1.15rem, 1.7vw, 1.55rem);
     font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: -0.02em;
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    letter-spacing: 0;
+    line-height: 1.15;
+    word-break: break-word;
 }
-.metric-good { color: #10b981; }
-.metric-warn { color: #f59e0b; }
-.metric-bad  { color: #ef4444; }
-.metric-neutral { color: #94a3b8; }
+.metric-good { color: var(--green); }
+.metric-warn { color: var(--amber); }
+.metric-bad  { color: var(--red); }
+.metric-neutral { color: #b8c4cf; }
 
 /* ── 变量标签 ── */
 .var-tag {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 12px;
-    border-radius: 20px;
+    padding: 4px 10px;
+    border-radius: 999px;
     font-size: 0.8rem;
     font-weight: 500;
     border: 1px solid;
-    font-family: 'Noto Sans SC', sans-serif;
+    font-family: "Microsoft YaHei", "DengXian", "Segoe UI", sans-serif;
 }
 
 /* ── 分隔线 ── */
 .divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, #2a3555, transparent);
-    margin: 1.5rem 0;
+    background: linear-gradient(90deg, transparent, var(--line), transparent);
+    margin: 1.15rem 0;
 }
 
 /* ── 状态指示 ── */
@@ -221,11 +283,7 @@ section[data-testid="stSidebar"] .stRadio > div {
     border-radius: 50%;
     display: inline-block;
     margin-right: 6px;
-    animation: pulse 2s infinite;
-}
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    box-shadow: 0 0 0 4px rgba(37,194,181,0.12);
 }
 
 /* ── 隐藏 Streamlit 默认装饰 ── */
@@ -233,83 +291,121 @@ header[data-testid="stHeader"] { background: transparent; }
 .stDeployButton { display: none; }
 div[data-testid="stDecoration"] { display: none; }
 
-/* ── 按钮 ── */
+/* ── 控件 ── */
+.stButton > button {
+    border-radius: 8px !important;
+    font-family: "Microsoft YaHei", "DengXian", "Segoe UI", sans-serif !important;
+    font-weight: 600 !important;
+}
 .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    border: 1px solid #3b82f6;
+    background: linear-gradient(135deg, #1f7f78 0%, #176e96 100%);
+    border: 1px solid rgba(37,194,181,0.72);
     color: white;
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    font-family: 'Noto Sans SC', sans-serif;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .stButton > button[kind="primary"]:hover {
-    box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
-    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(37,194,181,0.14);
+    border-color: #53d9cf;
+    transform: translateY(-1px);
+}
+.stDownloadButton > button,
+div[data-testid="stFileUploader"] section {
+    border-radius: 8px !important;
+    border-color: var(--line) !important;
+    background: rgba(16,24,33,0.72) !important;
 }
 
 /* ── Streamlit metric 覆写 ── */
 div[data-testid="stMetric"] {
-    background: #0d1321;
-    border: 1px solid #1e293b;
-    border-radius: 10px;
+    background: rgba(16,24,33,0.92);
+    border: 1px solid var(--line);
+    border-radius: 8px;
     padding: 0.75rem 1rem;
 }
 div[data-testid="stMetric"] label {
-    color: #64748b !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.7rem !important;
+    color: var(--faint) !important;
+    font-family: "Consolas", "Cascadia Mono", monospace !important;
+    font-size: 0.68rem !important;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.08em;
 }
 div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 1.5rem !important;
-    color: #e2e8f0 !important;
+    font-family: "Consolas", "Cascadia Mono", monospace !important;
+    font-size: 1.35rem !important;
+    color: var(--text) !important;
 }
 
 /* ── 数据信息栏 ── */
 .info-bar {
     display: flex;
-    gap: 2rem;
-    padding: 0.75rem 1.25rem;
-    background: rgba(59, 130, 246, 0.06);
-    border: 1px solid rgba(59, 130, 246, 0.15);
+    gap: 0.7rem;
+    padding: 0.7rem;
+    background: rgba(16, 24, 33, 0.82);
+    border: 1px solid var(--line);
     border-radius: 8px;
     margin-bottom: 1rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    color: #94a3b8;
+    font-family: "Consolas", "Cascadia Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
     flex-wrap: wrap;
 }
-.info-item { display: flex; align-items: center; gap: 6px; }
-.info-val { color: #e2e8f0; font-weight: 500; }
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.38rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(154,168,180,0.12);
+}
+.info-val { color: var(--text); font-weight: 600; }
 
 /* ── 节标题 ── */
 .section-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #e2e8f0;
-    margin: 1.5rem 0 0.75rem 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 1.35rem 0 0.72rem 0;
     display: flex;
     align-items: center;
     gap: 10px;
-    font-family: 'Noto Sans SC', sans-serif;
+    letter-spacing: 0;
+}
+.section-title::before {
+    content: '';
+    width: 3px;
+    height: 1rem;
+    border-radius: 99px;
+    background: var(--cyan);
 }
 .section-title::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, #2a3555, transparent);
+    background: linear-gradient(90deg, var(--line), transparent);
 }
 
-/* ── 图表容器 ── */
+/* ── 图表容器与提示 ── */
 .plot-container {
-    background: #0d1321;
-    border: 1px solid #1e293b;
-    border-radius: 12px;
+    background: rgba(16,24,33,0.92);
+    border: 1px solid var(--line);
+    border-radius: 8px;
     padding: 0.5rem;
     margin-bottom: 0.5rem;
+}
+.stAlert {
+    border-radius: 8px;
+}
+details {
+    border-radius: 8px !important;
+    border-color: var(--line) !important;
+    background: rgba(16,24,33,0.82) !important;
+}
+@media (max-width: 900px) {
+    .hero-title { font-size: 1.42rem; }
+    .metric-grid { grid-template-columns: 1fr; }
+    .metric-card { min-height: auto; }
+    .info-bar { gap: 0.45rem; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -459,20 +555,16 @@ def load_data(data_dir):
 
 
 @st.cache_resource
-def load_model(path, model_type, out_ch):
-    """加载模型权重, 自动检测架构"""
+def load_model(path, out_ch):
+    """加载交叉注意力增强 U-Net 权重。"""
     state_dict = torch.load(path, map_location=DEVICE, weights_only=True)
-    detected = "enhanced" if any(k.startswith("time_embed.") for k in state_dict) else "legacy"
-    if model_type == "auto":
-        model_type = detected
+    if not any(k.startswith("time_embed.") for k in state_dict):
+        raise ValueError("当前前端仅支持增强 U-Net（交叉注意力）权重，请选择增强架构训练得到的 .pth 文件。")
 
-    if model_type == "enhanced":
-        m = EnhancedConditionalUNet1D(
-            in_channels=out_ch, cond_channels=1, out_channels=out_ch,
-            use_cross_attention=True,
-        )
-    else:
-        m = ConditionalUNet1D(in_channels=out_ch, cond_channels=1, out_channels=out_ch)
+    m = EnhancedConditionalUNet1D(
+        in_channels=out_ch, cond_channels=1, out_channels=out_ch,
+        use_cross_attention=True,
+    )
 
     m.load_state_dict(state_dict)
     m.to(DEVICE).eval()
@@ -709,7 +801,50 @@ def extract_upload_arrays(x_payload, y_payload=None):
     return x_array, y_array
 
 
-def run_uploaded_inference(model, x_array, stats, sampler, schedule, out_ch, ddim_steps, smooth):
+def extract_upload_metadata(x_payload, n_samples):
+    """提取上传 npz 中的样本索引、拆分来源等辅助信息。"""
+    metadata = {
+        "sample_indices": list(range(n_samples)),
+        "split": ["upload"] * n_samples,
+    }
+    if not isinstance(x_payload, dict):
+        return metadata
+
+    if "sample_indices" in x_payload:
+        sample_indices = np.asarray(x_payload["sample_indices"]).reshape(-1)
+        if len(sample_indices) == n_samples:
+            metadata["sample_indices"] = [int(v) for v in sample_indices]
+
+    if "split" in x_payload:
+        split_values = np.asarray(x_payload["split"]).reshape(-1)
+        if len(split_values) == n_samples:
+            metadata["split"] = [str(v) for v in split_values]
+
+    return metadata
+
+
+def subset_upload_metadata(metadata, limit):
+    """按本次分析样本数截断上传元数据。"""
+    if not metadata:
+        return None
+    return {
+        "sample_indices": metadata.get("sample_indices", [])[:limit],
+        "split": metadata.get("split", [])[:limit],
+    }
+
+
+def set_sampling_seed(seed):
+    """固定扩散采样随机种子，使现场演示可复现。"""
+    if seed is None:
+        return
+    seed = int(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def run_uploaded_inference(model, x_array, stats, sampler, schedule, out_ch, ddim_steps, smooth, seed=None):
     """对上传的样本逐条执行推理。"""
     preds = []
     normalized_x = normalize_input_profiles(x_array, stats)
@@ -719,6 +854,7 @@ def run_uploaded_inference(model, x_array, stats, sampler, schedule, out_ch, ddi
     status = st.empty()
 
     for idx, x_norm in enumerate(normalized_x):
+        set_sampling_seed(None if seed is None else int(seed) + idx)
         cond = torch.tensor(x_norm).float().unsqueeze(0).unsqueeze(0).to(DEVICE)
         with torch.no_grad():
             if sampler == "DDIM":
@@ -781,6 +917,37 @@ def summarize_uploaded_metrics(preds, labels):
     return summary
 
 
+def build_uploaded_metric_rows(preds, labels, metadata=None):
+    """生成逐样本逐变量指标表。"""
+    if labels is None:
+        return []
+
+    labels = ensure_y_shape(labels)
+    if preds.ndim == 2:
+        preds = preds[:, None, :]
+
+    n_samples = min(len(preds), len(labels))
+    n_vars = min(preds.shape[1], labels.shape[1], len(VAR_META))
+    sample_indices = (metadata or {}).get("sample_indices", [])
+    split_values = (metadata or {}).get("split", [])
+
+    rows = []
+    for i in range(n_samples):
+        row = {
+            "上传序号": i,
+            "原始样本": sample_indices[i] if i < len(sample_indices) else i,
+            "来源": split_values[i] if i < len(split_values) else "upload",
+        }
+        for vi in range(n_vars):
+            metrics = evaluate_profile(preds[i, vi], labels[i, vi])
+            name = VAR_META[vi]["name"]
+            row[f"{name} CC"] = round(float(metrics["cc"]), 4)
+            row[f"{name} RMSE"] = round(float(metrics["rmse"]), 4)
+            row[f"{name} Bias"] = round(float(metrics["bias"]), 4)
+        rows.append(row)
+    return rows
+
+
 def build_prediction_download(preds):
     """构造可下载的预测结果 npz。"""
     buffer = io.BytesIO()
@@ -801,7 +968,7 @@ def plot_bending_angle(ba, heights):
         fig, ax = plt.subplots(figsize=(5, 5))
         ax.plot(ba, heights, color=COLORS['accent_cyan'], linewidth=1.8, alpha=0.9)
         ax.fill_betweenx(heights, ba, alpha=0.08, color=COLORS['accent_cyan'])
-        ax.set_xlabel('log₁₀(弯曲角 / rad)')
+        ax.set_xlabel('log10(弯曲角 / rad)')
         ax.set_ylabel('高度 (km)')
         ax.set_title('输入：弯曲角剖面', pad=12)
         ax.set_ylim(0, 60)
@@ -822,7 +989,7 @@ def plot_profile_comparison(pred, truth, heights, var_idx):
         ax.fill_betweenx(heights, truth, pred, alpha=0.06, color=meta['color'])
         ax.set_xlabel(f"{meta['name']} ({meta['unit']})")
         ax.set_ylabel('高度 (km)')
-        ax.set_title(f"{meta['icon']} {meta['name']}剖面对比", pad=12)
+        ax.set_title(f"{meta['name']}剖面对比", pad=12)
         ax.set_ylim(0, 60)
         ax.legend(loc='upper right', framealpha=0.8)
         fig.tight_layout()
@@ -896,7 +1063,7 @@ def render_prediction_results(pred_np, truth, heights):
                     ax.plot(pred_np, heights, color=VAR_META[0]['color'], linewidth=2)
                     ax.set_xlabel('温度 (K)')
                     ax.set_ylabel('高度 (km)')
-                    ax.set_title('🌡 温度反演结果', pad=12)
+                    ax.set_title('温度反演结果', pad=12)
                     ax.set_ylim(0, 60)
                     fig.tight_layout()
             st.pyplot(fig, width="stretch")
@@ -928,8 +1095,8 @@ def render_prediction_results(pred_np, truth, heights):
                     st.markdown(f"""
                     <div class="metric-card">
                         <div style="font-size: 0.85rem; color: {meta['color']}; font-weight: 600;
-                                    margin-bottom: 0.5rem; font-family: 'Noto Sans SC', sans-serif;">
-                            {meta['icon']} {meta['name']}
+                                    margin-bottom: 0.5rem; font-family: 'Microsoft YaHei', 'DengXian', 'Segoe UI', sans-serif;">
+                            {meta['name']}
                         </div>
                         <div style="display: flex; justify-content: space-around; gap: 0.5rem;">
                             <div>
@@ -951,8 +1118,8 @@ def render_prediction_results(pred_np, truth, heights):
                     st.markdown(f"""
                     <div class="metric-card">
                         <div style="font-size: 0.85rem; color: {meta['color']}; font-weight: 600;
-                                    margin-bottom: 0.5rem; font-family: 'Noto Sans SC', sans-serif;">
-                            {meta['icon']} {meta['name']}
+                                    margin-bottom: 0.5rem; font-family: 'Microsoft YaHei', 'DengXian', 'Segoe UI', sans-serif;">
+                            {meta['name']}
                         </div>
                         <div class="metric-label">Prediction Only</div>
                     </div>
@@ -970,7 +1137,7 @@ def render_prediction_results(pred_np, truth, heights):
                         ax.plot(pred_np[vi], heights, color=VAR_META[vi]['color'], linewidth=2)
                         ax.set_xlabel(f"{VAR_META[vi]['name']} ({VAR_META[vi]['unit']})")
                         ax.set_ylabel('高度 (km)')
-                        ax.set_title(f"{VAR_META[vi]['icon']} {VAR_META[vi]['name']}反演结果", pad=12)
+                        ax.set_title(f"{VAR_META[vi]['name']}反演结果", pad=12)
                         ax.set_ylim(0, 60)
                         fig.tight_layout()
                 st.pyplot(fig, width="stretch")
@@ -981,10 +1148,17 @@ def render_prediction_results(pred_np, truth, heights):
 def main():
     # ── 标题 ──
     st.markdown("""
-    <div style="padding: 0.5rem 0 0.25rem 0;">
+    <div class="hero-shell">
+        <div class="hero-kicker">Acceptance Demo Console</div>
         <div class="hero-title">GNSS-RO 大气剖面反演系统</div>
         <div class="hero-subtitle">
-            基于条件扩散模型 · 多数据源切换演示 · 温度 / 气压 / 湿度三变量联合反演
+            条件扩散模型驱动的温度、气压、湿度三变量联合反演，可用于上传样本推理、本地数据集演示与全测试集结果展示。
+        </div>
+        <div class="hero-chips">
+            <span class="hero-chip">FY-3D GNOS</span>
+            <span class="hero-chip">301 层高度网格</span>
+            <span class="hero-chip">DDPM / DDIM</span>
+            <span class="hero-chip">ATP -> WAP</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -997,8 +1171,8 @@ def main():
         st.markdown("""
         <div style="padding: 0.5rem 0; margin-bottom: 0.5rem;">
             <div style="font-size: 1.05rem; font-weight: 600; color: #e2e8f0;
-                        font-family: 'Noto Sans SC', sans-serif;">
-                ⚙️ 模型配置
+                        font-family: 'Microsoft YaHei', 'DengXian', 'Segoe UI', sans-serif;">
+                模型配置
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1011,8 +1185,8 @@ def main():
             mode_options,
             index=0,
             format_func=lambda x: {
-                "upload": "📤 上传分析",
-                "local": "🗂️ 本地数据集",
+                "upload": "上传分析",
+                "local": "本地数据集",
             }[x],
             help="推荐使用上传分析模式，适合没有本地完整数据集的场景。",
         )
@@ -1071,15 +1245,7 @@ def main():
         )
         model_path = pth_files[sel_idx]
 
-        model_type = st.radio(
-            "架构",
-            ["auto", "enhanced", "legacy"],
-            format_func=lambda x: {
-                "auto": "自动检测",
-                "enhanced": "增强 U-Net (交叉注意力)",
-                "legacy": "原始 U-Net",
-            }[x],
-        )
+        st.caption("架构：增强 U-Net（交叉注意力）")
 
         out_ch = st.selectbox(
             "输出通道",
@@ -1090,7 +1256,7 @@ def main():
         st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
         st.markdown("""
         <div style="font-size: 0.85rem; font-weight: 500; color: #94a3b8;
-                    font-family: 'Noto Sans SC', sans-serif; margin-bottom: 0.5rem;">
+                    font-family: 'Microsoft YaHei', 'DengXian', 'Segoe UI', sans-serif; margin-bottom: 0.5rem;">
             采样设置
         </div>
         """, unsafe_allow_html=True)
@@ -1099,7 +1265,7 @@ def main():
             "采样方法",
             ["DDPM", "DDIM"],
             format_func=lambda x: (
-                "🔬 DDPM — 1000 步完整采样" if x == "DDPM" else "⚡ DDIM — 快速采样"
+                "DDPM - 1000 步完整采样" if x == "DDPM" else "DDIM - 快速采样"
             ),
         )
 
@@ -1108,16 +1274,23 @@ def main():
             ddim_steps = st.slider("DDIM 步数", 10, 200, 50, step=10)
 
         smooth = st.checkbox("Savitzky-Golay 平滑", value=True)
+        fixed_seed = st.number_input(
+            "采样随机种子",
+            min_value=0,
+            max_value=999999,
+            value=2026,
+            step=1,
+            help="固定随机种子后，同一输入文件的演示结果更稳定、可复现。",
+        )
 
         st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
         dev_str = str(DEVICE)
-        dev_icon = "🟢" if "cuda" in dev_str else "🟡"
         st.markdown(f"""
-        <div style="font-size: 0.75rem; color: #64748b; font-family: 'JetBrains Mono', monospace;">
-            {dev_icon} 设备: {dev_str}<br>
-            📐 高度网格: 0–60 km, 301 层<br>
-            🔢 扩散步数: {TIMESTEPS}
+        <div style="font-size: 0.75rem; color: #64748b; font-family: 'Consolas', 'Cascadia Mono', monospace;">
+            设备: {dev_str}<br>
+            高度网格: 0-60 km, 301 层<br>
+            扩散步数: {TIMESTEPS}
         </div>
         """, unsafe_allow_html=True)
 
@@ -1131,10 +1304,10 @@ def main():
 
         st.markdown(f"""
         <div class="info-bar">
-            <div class="info-item">📤 模式 <span class="info-val">上传分析</span></div>
-            <div class="info-item">📏 统计量 <span class="info-val">{source_name}</span></div>
-            <div class="info-item">🤖 模型 <span class="info-val">{os.path.basename(model_path)}</span></div>
-            <div class="info-item">🎯 输出 <span class="info-val">{out_ch} 通道</span></div>
+            <div class="info-item">模式 <span class="info-val">上传分析</span></div>
+            <div class="info-item">统计量 <span class="info-val">{source_name}</span></div>
+            <div class="info-item">模型 <span class="info-val">{os.path.basename(model_path)}</span></div>
+            <div class="info-item">输出 <span class="info-val">{out_ch} 通道</span></div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1167,6 +1340,7 @@ def main():
 
         uploaded_x = None
         uploaded_y = None
+        upload_metadata = None
         if uploaded_x_file is not None:
             try:
                 x_payload, _ = load_array_from_upload(uploaded_x_file)
@@ -1174,6 +1348,7 @@ def main():
                 if uploaded_y_file is not None:
                     y_payload, _ = load_array_from_upload(uploaded_y_file)
                 uploaded_x, uploaded_y = extract_upload_arrays(x_payload, y_payload)
+                upload_metadata = extract_upload_metadata(x_payload, len(uploaded_x))
             except Exception as exc:
                 st.error(f"上传文件解析失败: {exc}")
                 uploaded_x = None
@@ -1183,9 +1358,9 @@ def main():
             total_uploaded = len(uploaded_x)
             st.markdown(f"""
             <div class="info-bar">
-                <div class="info-item">📥 上传样本 <span class="info-val">{total_uploaded:,}</span></div>
-                <div class="info-item">📐 输入形状 <span class="info-val">{tuple(uploaded_x.shape)}</span></div>
-                <div class="info-item">🏷️ 标签 <span class="info-val">{'已提供' if uploaded_y is not None else '未提供'}</span></div>
+                <div class="info-item">上传样本 <span class="info-val">{total_uploaded:,}</span></div>
+                <div class="info-item">输入形状 <span class="info-val">{tuple(uploaded_x.shape)}</span></div>
+                <div class="info-item">标签 <span class="info-val">{'已提供' if uploaded_y is not None else '未提供'}</span></div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -1221,7 +1396,7 @@ def main():
 
             if st.button("开始分析上传数据", type="primary"):
                 try:
-                    model = load_model(model_path, model_type, out_ch)
+                    model = load_model(model_path, out_ch)
                 except Exception as exc:
                     st.error(f"模型加载失败: {exc}")
                     return
@@ -1229,6 +1404,7 @@ def main():
                 schedule = DiffusionSchedule(TIMESTEPS, device=DEVICE)
                 x_batch = uploaded_x[:analysis_limit]
                 y_batch = uploaded_y[:analysis_limit] if uploaded_y is not None else None
+                metadata_batch = subset_upload_metadata(upload_metadata, analysis_limit)
                 preds = run_uploaded_inference(
                     model,
                     x_batch,
@@ -1238,9 +1414,11 @@ def main():
                     out_ch,
                     ddim_steps,
                     smooth,
+                    seed=fixed_seed,
                 )
 
                 metric_summary = summarize_uploaded_metrics(preds, y_batch)
+                metric_rows = build_uploaded_metric_rows(preds, y_batch, metadata_batch)
                 st.success(f"上传数据分析完成，共处理 {len(preds)} 个样本。")
 
                 if metric_summary:
@@ -1255,8 +1433,8 @@ def main():
                             st.markdown(f"""
                             <div class="metric-card">
                                 <div style="font-size: 0.85rem; color: {VAR_META[vi]['color']}; font-weight: 600;
-                                            margin-bottom: 0.5rem; font-family: 'Noto Sans SC', sans-serif;">
-                                    {VAR_META[vi]['icon']} {VAR_META[vi]['name']}
+                                            margin-bottom: 0.5rem; font-family: 'Microsoft YaHei', 'DengXian', 'Segoe UI', sans-serif;">
+                                    {VAR_META[vi]['name']}
                                 </div>
                                 <div style="display: flex; justify-content: space-around; gap: 0.5rem;">
                                     <div>
@@ -1275,6 +1453,15 @@ def main():
                             </div>
                             """, unsafe_allow_html=True)
 
+                    if metric_rows:
+                        st.markdown('<div class="section-title">逐样本指标明细</div>', unsafe_allow_html=True)
+                        metric_df = pd.DataFrame(metric_rows)
+                        st.dataframe(
+                            metric_df,
+                            width="stretch",
+                            hide_index=True,
+                        )
+
                     st.download_button(
                         "下载批量预测结果 (.npz)",
                         data=build_prediction_download(preds),
@@ -1283,7 +1470,20 @@ def main():
                     )
                     st.download_button(
                         "下载评估摘要 (.json)",
-                        data=json.dumps(metric_export, ensure_ascii=False, indent=2),
+                        data=json.dumps(
+                            {
+                                "summary": metric_export,
+                                "per_sample": metric_rows,
+                                "sampling": {
+                                    "sampler": sampler,
+                                    "ddim_steps": ddim_steps if sampler == "DDIM" else None,
+                                    "seed": int(fixed_seed),
+                                    "smooth": bool(smooth),
+                                },
+                            },
+                            ensure_ascii=False,
+                            indent=2,
+                        ),
                         file_name="uploaded_metrics_summary.json",
                         mime="application/json",
                     )
@@ -1323,12 +1523,12 @@ def main():
 
         st.markdown(f"""
         <div class="info-bar">
-            <div class="info-item">🗂️ 数据源 <span class="info-val">{dataset_name}</span></div>
-            <div class="info-item">📦 训练集 <span class="info-val">{train_n:,}</span></div>
-            <div class="info-item">📋 验证集 <span class="info-val">{val_n:,}</span></div>
-            <div class="info-item">🧪 测试集 <span class="info-val">{test_n:,}</span></div>
-            <div class="info-item">📐 总样本 <span class="info-val">{train_n + val_n + test_n:,}</span></div>
-            <div class="info-item">📏 统计量 <span class="info-val">{stats_source}</span></div>
+            <div class="info-item">数据源 <span class="info-val">{dataset_name}</span></div>
+            <div class="info-item">训练集 <span class="info-val">{train_n:,}</span></div>
+            <div class="info-item">验证集 <span class="info-val">{val_n:,}</span></div>
+            <div class="info-item">测试集 <span class="info-val">{test_n:,}</span></div>
+            <div class="info-item">总样本 <span class="info-val">{train_n + val_n + test_n:,}</span></div>
+            <div class="info-item">统计量 <span class="info-val">{stats_source}</span></div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1364,7 +1564,7 @@ def main():
             sample_idx = st.number_input("样本索引", 0, n_split - 1, value=min(42, n_split - 1))
         with col_btn:
             st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🎲 随机", width="stretch"):
+            if st.button("随机", width="stretch"):
                 st.session_state['_rand_idx'] = int(np.random.randint(0, n_split))
                 st.rerun()
         if '_rand_idx' in st.session_state:
@@ -1387,7 +1587,7 @@ def main():
         st.markdown('<div class="section-title">模型反演</div>', unsafe_allow_html=True)
         if st.button("开始反演", type="primary", width="content"):
             try:
-                model = load_model(model_path, model_type, out_ch)
+                model = load_model(model_path, out_ch)
             except Exception as exc:
                 st.error(f"模型加载失败: {exc}")
                 return
@@ -1425,8 +1625,8 @@ def main():
         n_eval = report.get('n_samples', '—')
         st.markdown(f"""
         <div class="info-bar">
-            <div class="info-item">📁 实验 <span class="info-val">{exp_name}</span></div>
-            <div class="info-item">🧪 评估样本 <span class="info-val">{n_eval:,}</span></div>
+            <div class="info-item">实验 <span class="info-val">{exp_name}</span></div>
+            <div class="info-item">评估样本 <span class="info-val">{n_eval:,}</span></div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1445,8 +1645,8 @@ def main():
                 st.markdown(f"""
                 <div class="metric-card">
                     <div style="font-size: 0.85rem; color: {meta['color']}; font-weight: 600;
-                                margin-bottom: 0.5rem; font-family: 'Noto Sans SC', sans-serif;">
-                        {meta['icon']} {var_cn[vk]}
+                                margin-bottom: 0.5rem; font-family: 'Microsoft YaHei', 'DengXian', 'Segoe UI', sans-serif;">
+                        {var_cn[vk]}
                         <span style="font-size: 0.7rem; color: #64748b; margin-left: 0.5rem;">
                             n={s.get('count', '—'):,}
                         </span>
@@ -1466,7 +1666,7 @@ def main():
                         </div>
                     </div>
                     <div style="margin-top: 0.5rem; font-size: 0.7rem; color: #475569;
-                                font-family: 'JetBrains Mono', monospace;">
+                                font-family: 'Consolas', 'Cascadia Mono', monospace;">
                         CC range: [{s.get('cc_min', 0):.3f}, {s.get('cc_max', 0):.3f}] &nbsp;|&nbsp;
                         RMSE range: [{s.get('rmse_min', 0):.3f}, {s.get('rmse_max', 0):.3f}]
                     </div>
@@ -1477,7 +1677,7 @@ def main():
         exp_path = os.path.join(PROJECT_ROOT, 'experiments', exp_name)
         pngs = [f for f in os.listdir(exp_path) if f.endswith('.png')] if os.path.isdir(exp_path) else []
         if pngs:
-            with st.expander("📊 查看评估图表", expanded=False):
+            with st.expander("查看评估图表", expanded=False):
                 img_cols = st.columns(min(len(pngs), 3))
                 for i, png in enumerate(sorted(pngs)):
                     with img_cols[i % 3]:
@@ -1491,7 +1691,7 @@ def main():
     st.markdown("""
     <div style="margin-top: 3rem; padding: 1rem 0; border-top: 1px solid #1e293b;
                 text-align: center; font-size: 0.75rem; color: #475569;
-                font-family: 'JetBrains Mono', monospace;">
+                font-family: 'Consolas', 'Cascadia Mono', monospace;">
         GNSS-RO Atmospheric Profile Retrieval System &nbsp;·&nbsp;
         Conditional Diffusion Model &nbsp;·&nbsp; FY-3D GNOS
     </div>

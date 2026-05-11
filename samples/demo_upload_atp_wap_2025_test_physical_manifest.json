@@ -1,0 +1,25 @@
+{
+  "created_for": "Streamlit upload-mode physical-space test demo",
+  "source_data_dir": "D:\\02_Study\\01_Schoolwork\\Graduation Design\\Data\\Processed_ATP_WAP_2025",
+  "input_file": "demo_upload_atp_wap_2025_test_physical.npz",
+  "x_only_file": "demo_upload_atp_wap_2025_test_physical_x_only.npz",
+  "x_shape": [
+    3,
+    301
+  ],
+  "y_shape": [
+    3,
+    3,
+    301
+  ],
+  "heights_shape": [
+    301
+  ],
+  "sample_indices": [
+    7168,
+    8192,
+    9000
+  ],
+  "data_space": "physical/display space; frontend upload mode will normalize x before inference",
+  "upload_instruction": "Upload demo_upload_atp_wap_2025_test_physical.npz to the left input box only. Do not upload test_y.npy on the right."
+}

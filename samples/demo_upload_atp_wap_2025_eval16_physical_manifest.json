@@ -1,0 +1,62 @@
+{
+  "created_for": "Streamlit upload-mode physical-space larger demo set",
+  "source_data_dir": "D:\\02_Study\\01_Schoolwork\\Graduation Design\\Data\\Processed_ATP_WAP_2025",
+  "input_file": "demo_upload_atp_wap_2025_eval16_physical.npz",
+  "x_only_file": "demo_upload_atp_wap_2025_eval16_physical_x_only.npz",
+  "x_shape": [
+    16,
+    301
+  ],
+  "y_shape": [
+    16,
+    3,
+    301
+  ],
+  "heights_shape": [
+    301
+  ],
+  "sample_indices": [
+    0,
+    42,
+    128,
+    256,
+    512,
+    768,
+    1024,
+    1536,
+    2048,
+    3072,
+    4096,
+    5120,
+    6144,
+    7168,
+    8192,
+    9000
+  ],
+  "split_labels": [
+    "train",
+    "train",
+    "train",
+    "train",
+    "train",
+    "train",
+    "train",
+    "train",
+    "train",
+    "train",
+    "val",
+    "val",
+    "val",
+    "test",
+    "test",
+    "test"
+  ],
+  "split_counts": {
+    "train": 10,
+    "val": 3,
+    "test": 3
+  },
+  "data_space": "physical/display space; frontend upload mode will normalize x before inference",
+  "upload_instruction": "Upload demo_upload_atp_wap_2025_eval16_physical.npz to the left input box only. Leave the right label upload empty.",
+  "note": "This is a 16-sample acceptance/demo evaluation set, not the full thesis test set."
+}
