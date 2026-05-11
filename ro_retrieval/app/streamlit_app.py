@@ -668,17 +668,51 @@ def get_temperature_stats(stats):
     return np.float32(y_mean[0]), np.float32(y_std[0])
 
 
-def denormalize_prediction(pred, stats, out_ch):
-    """根据输出通道数做反标准化。"""
-    pred = pred.squeeze(0).cpu().numpy()
+def denormalize_prediction(pred, stats, out_ch, keep_batch=False):
+    """根据输出通道数做反标准化，支持单样本和批量张量。"""
+    pred_np = pred.detach().cpu().numpy() if isinstance(pred, torch.Tensor) else np.asarray(pred, dtype=np.float32)
 
-    if pred.ndim == 1 or out_ch == 1:
-        temp_mean, temp_std = get_temperature_stats(stats)
-        return pred.reshape(-1) * temp_std + temp_mean
+    if pred_np.ndim == 3:
+        if out_ch == 1 or pred_np.shape[1] == 1:
+            temp_mean, temp_std = get_temperature_stats(stats)
+            result = pred_np[:, 0, :] * temp_std + temp_mean
+        else:
+            y_mean = np.asarray(stats["y_mean"], dtype=np.float32)
+            y_std = np.asarray(stats["y_std"], dtype=np.float32)
+            channels = min(pred_np.shape[1], y_mean.shape[0], y_std.shape[0])
+            result = pred_np[:, :channels, :] * y_std[:channels][None, :, None] + y_mean[:channels][None, :, None]
+        return result if keep_batch or result.shape[0] != 1 else result[0]
 
-    y_mean = np.asarray(stats["y_mean"], dtype=np.float32)
-    y_std = np.asarray(stats["y_std"], dtype=np.float32)
-    return pred * y_std[:, None] + y_mean[:, None]
+    if pred_np.ndim == 2:
+        if out_ch == 1:
+            temp_mean, temp_std = get_temperature_stats(stats)
+            result = pred_np * temp_std + temp_mean
+            return result if keep_batch or result.shape[0] != 1 else result.reshape(-1)
+
+        y_mean = np.asarray(stats["y_mean"], dtype=np.float32)
+        y_std = np.asarray(stats["y_std"], dtype=np.float32)
+        channels = min(pred_np.shape[0], y_mean.shape[0], y_std.shape[0])
+        return pred_np[:channels] * y_std[:channels, None] + y_mean[:channels, None]
+
+    temp_mean, temp_std = get_temperature_stats(stats)
+    return pred_np.reshape(-1) * temp_std + temp_mean
+
+
+def smooth_prediction_array(pred):
+    """对预测剖面执行 Savitzky-Golay 平滑，支持单样本和批量数组。"""
+    smoothed = np.array(pred, copy=True)
+    if smoothed.ndim == 1:
+        return savgol_filter(smoothed, SAVGOL_WINDOW, SAVGOL_POLYORDER)
+    if smoothed.ndim == 2:
+        for i in range(smoothed.shape[0]):
+            smoothed[i] = savgol_filter(smoothed[i], SAVGOL_WINDOW, SAVGOL_POLYORDER)
+        return smoothed
+    if smoothed.ndim == 3:
+        for bi in range(smoothed.shape[0]):
+            for vi in range(smoothed.shape[1]):
+                smoothed[bi, vi] = savgol_filter(smoothed[bi, vi], SAVGOL_WINDOW, SAVGOL_POLYORDER)
+        return smoothed
+    return smoothed
 
 
 def denormalize_input_profiles(x_array, stats):
@@ -870,24 +904,40 @@ def set_sampling_seed(seed):
         torch.cuda.manual_seed_all(seed)
 
 
-def run_uploaded_inference(model, x_array, stats, sampler, schedule, out_ch, ddim_steps, smooth, seed=None):
-    """对上传的样本逐条执行推理。"""
+def run_uploaded_inference(
+    model,
+    x_array,
+    stats,
+    sampler,
+    schedule,
+    out_ch,
+    ddim_steps,
+    smooth,
+    seed=None,
+    batch_size=16,
+):
+    """对上传样本按 batch 执行推理。"""
     preds = []
-    normalized_x = normalize_input_profiles(x_array, stats)
+    normalized_x = normalize_input_profiles(x_array, stats).astype(np.float32)
     total = len(normalized_x)
+    batch_size = max(1, min(int(batch_size), total))
 
     progress_bar = st.progress(0, text="准备开始批量分析...")
     status = st.empty()
 
-    for idx, x_norm in enumerate(normalized_x):
-        set_sampling_seed(None if seed is None else int(seed) + idx)
-        cond = torch.tensor(x_norm).float().unsqueeze(0).unsqueeze(0).to(DEVICE)
-        with torch.no_grad():
+    for start in range(0, total, batch_size):
+        end = min(start + batch_size, total)
+        batch_x = normalized_x[start:end]
+        set_sampling_seed(None if seed is None else int(seed) + start)
+        cond = torch.from_numpy(batch_x).float().unsqueeze(1).to(DEVICE)
+        shape = (end - start, out_ch, cond.shape[-1])
+
+        with torch.inference_mode():
             if sampler == "DDIM":
                 gen = ddim_sample(
                     model,
                     cond,
-                    shape=(1, out_ch, 301),
+                    shape=shape,
                     schedule=schedule,
                     ddim_steps=ddim_steps,
                 )
@@ -895,26 +945,22 @@ def run_uploaded_inference(model, x_array, stats, sampler, schedule, out_ch, ddi
                 gen = ddpm_sample(
                     model,
                     cond,
-                    shape=(1, out_ch, 301),
+                    shape=shape,
                     schedule=schedule,
                 )
 
-        pred_np = denormalize_prediction(gen, stats, out_ch)
+        pred_np = denormalize_prediction(gen, stats, out_ch, keep_batch=True)
         if smooth:
-            if pred_np.ndim == 1:
-                pred_np = savgol_filter(pred_np, SAVGOL_WINDOW, SAVGOL_POLYORDER)
-            else:
-                for vi in range(pred_np.shape[0]):
-                    pred_np[vi] = savgol_filter(pred_np[vi], SAVGOL_WINDOW, SAVGOL_POLYORDER)
-
+            pred_np = smooth_prediction_array(pred_np)
         preds.append(pred_np.astype(np.float32))
-        pct = int((idx + 1) / total * 100)
-        progress_bar.progress(pct, text=f"正在分析第 {idx + 1}/{total} 个样本...")
-        status.caption(f"已完成 {idx + 1}/{total} 个样本")
+
+        pct = int(end / total * 100)
+        progress_bar.progress(pct, text=f"正在分析第 {start + 1}-{end}/{total} 个样本...")
+        status.caption(f"已完成 {end}/{total} 个样本 · Batch Size {batch_size}")
 
     progress_bar.empty()
     status.empty()
-    return np.stack(preds, axis=0)
+    return np.concatenate(preds, axis=0)
 
 
 def summarize_uploaded_metrics(preds, labels):
@@ -1390,15 +1436,24 @@ def main():
             </div>
             """, unsafe_allow_html=True)
 
-            col_limit, col_preview = st.columns([1, 1])
+            col_limit, col_batch, col_preview = st.columns([1, 1, 1])
             with col_limit:
-                default_limit = min(total_uploaded, 16 if sampler == "DDPM" else 64)
+                default_limit = min(total_uploaded, 32 if sampler == "DDPM" else 256)
                 analysis_limit = st.number_input(
                     "本次分析样本数",
                     min_value=1,
                     max_value=total_uploaded,
                     value=default_limit,
-                    help="DDPM 较慢，建议现场控制在较小样本数。",
+                    help="DDPM 较慢，建议现场控制在较小样本数；DDIM 可使用更大批量展示 GPU 吞吐。",
+                )
+            with col_batch:
+                default_batch_size = min(int(analysis_limit), 8 if sampler == "DDPM" else 64)
+                batch_size = st.number_input(
+                    "Batch Size",
+                    min_value=1,
+                    max_value=int(analysis_limit),
+                    value=default_batch_size,
+                    help="GPU 推理建议 DDIM 使用 32-128；显存不足时调小。",
                 )
             with col_preview:
                 preview_idx = st.number_input(
@@ -1418,7 +1473,7 @@ def main():
                 render_truth_preview(preview_truth, heights)
 
             st.markdown('<div class="section-title">运行分析</div>', unsafe_allow_html=True)
-            st.caption("系统将对选定数量的上传样本逐条推理，并提供结果下载。")
+            st.caption("系统将按 Batch Size 对上传样本分批推理，并提供结果下载。")
 
             if st.button("开始分析上传数据", type="primary"):
                 try:
@@ -1441,6 +1496,7 @@ def main():
                     ddim_steps,
                     smooth,
                     seed=fixed_seed,
+                    batch_size=batch_size,
                 )
 
                 metric_summary = summarize_uploaded_metrics(preds, y_batch)
@@ -1624,7 +1680,7 @@ def main():
             cond = torch.tensor(cond_np).float().unsqueeze(0).unsqueeze(0).to(DEVICE)
 
             progress_bar = st.progress(0, text="初始化扩散采样...")
-            with torch.no_grad():
+            with torch.inference_mode():
                 if sampler == "DDIM":
                     progress_bar.progress(10, text=f"DDIM {ddim_steps} 步采样中...")
                     gen = ddim_sample(model, cond, shape=(1, out_ch, 301), schedule=schedule, ddim_steps=ddim_steps)
@@ -1634,11 +1690,7 @@ def main():
 
             pred_np = denormalize_prediction(gen, stats, out_ch)
             if smooth:
-                if pred_np.ndim == 1:
-                    pred_np = savgol_filter(pred_np, SAVGOL_WINDOW, SAVGOL_POLYORDER)
-                else:
-                    for i in range(pred_np.shape[0]):
-                        pred_np[i] = savgol_filter(pred_np[i], SAVGOL_WINDOW, SAVGOL_POLYORDER)
+                pred_np = smooth_prediction_array(pred_np)
             progress_bar.progress(100, text="反演完成")
             render_prediction_results(pred_np, truth, heights)
 
