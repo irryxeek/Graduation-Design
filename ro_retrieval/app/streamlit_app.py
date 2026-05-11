@@ -16,12 +16,38 @@ import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.font_manager as fm
 import pandas as pd
 from scipy.signal import savgol_filter
+
+_CJK_FONT_CANDIDATES = [
+    "Noto Sans CJK SC",
+    "Noto Sans CJK JP",
+    "Source Han Sans SC",
+    "Source Han Sans CN",
+    "WenQuanYi Micro Hei",
+    "Microsoft YaHei",
+    "SimHei",
+    "PingFang SC",
+    "Heiti SC",
+    "Arial Unicode MS",
+    "DejaVu Sans",
+]
+
+_available_fonts = {font.name for font in fm.fontManager.ttflist}
+_chosen_font = next((name for name in _CJK_FONT_CANDIDATES if name in _available_fonts), "DejaVu Sans")
+mpl.rcParams["font.family"] = "sans-serif"
+mpl.rcParams["font.sans-serif"] = [_chosen_font, "DejaVu Sans"]
+mpl.rcParams["axes.unicode_minus"] = False
 
 # ─────────────────── 中文字体 & 绘图风格 ───────────────────
 mpl.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'DejaVu Sans']
 mpl.rcParams['axes.unicode_minus'] = False
+_available_fonts = {font.name for font in fm.fontManager.ttflist}
+_chosen_font = next((name for name in _CJK_FONT_CANDIDATES if name in _available_fonts), "DejaVu Sans")
+mpl.rcParams["font.family"] = "sans-serif"
+mpl.rcParams["font.sans-serif"] = [_chosen_font, "DejaVu Sans"]
+mpl.rcParams["axes.unicode_minus"] = False
 warnings.filterwarnings(
     "ignore",
     message=r".*Glyph.*missing from current font.*",
